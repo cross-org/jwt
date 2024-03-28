@@ -1,0 +1,14 @@
+{
+    "name": "@cross/jwt",
+    "version": "0.0.1",
+    "exports": "./mod.ts",
+
+    "tasks": {
+        "publish-dry": "deno publish --dry-run"
+    },
+    "fmt": {
+        "lineWidth": 120,
+        "indentWidth": 4
+    },
+    "imports": { "@std/encoding": "jsr:@std/encoding@^0.220.1" }
+}
