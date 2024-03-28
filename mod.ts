@@ -88,7 +88,7 @@ export async function parseJWT(
         throw new JWTFormatError("Invalid JWT format");
     }
 
-    const header = JSON.parse(textDecode(decodeBase64Url(jwtParts[0]))) as { alg: string};
+    const header = JSON.parse(textDecode(decodeBase64Url(jwtParts[0]))) as { alg: string };
     const unsignedData = `${jwtParts[0]}.${jwtParts[1]}`;
     const signature = jwtParts[2];
 
