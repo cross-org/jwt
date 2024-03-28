@@ -4,6 +4,9 @@ Work in progress
 
 ## @cross/jwt
 
+[![JSR Version](https://jsr.io/badges/@cross/jwt)](https://jsr.io/@cross/jwt)
+[![JSR Score](https://jsr.io/badges/@cross/jwt/score)](https://jsr.io/@cross/jwt/score)
+
 A versatile JSON Web Token (JWT) library for Deno, Bun, and Node.js providing cross-runtime compatibility.
 
 Part of the @cross suite - check out our growing collection of cross-runtime tools at
