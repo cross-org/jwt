@@ -2,6 +2,8 @@
 import { JWTFormatError, JWTValidationError } from "./src/error.ts";
 import { decodeBase64Url, encodeBase64Url, textDecode, textEncode } from "./src/encoding.ts";
 import { sign, verify } from "./src/jwt.ts";
+import type { JWTPayload } from "./src/standardclaims.ts";
+export type { JWTPayload } from "./src/standardclaims.ts";
 
 /**
  * Generates an HMAC key from a provided secret string.
@@ -11,10 +13,9 @@ import { sign, verify } from "./src/jwt.ts";
  * @throws {JWTValidationError} If the secret string is less than 32 bytes long.
  */
 export async function generateKey(keyStr: string): Promise<CryptoKey> {
-    if (keyStr.length < 32) {
-        throw new JWTValidationError(
-            "JWT Secret String must be at least 32 bytes long",
-        );
+    const encodedKey = textEncode(keyStr);
+    if (encodedKey.byteLength < 32) {
+        throw new JWTValidationError("JWT Secret String must be at least 32 bytes long");
     }
 
     return await crypto.subtle.importKey(
@@ -48,12 +49,12 @@ export async function generateKeyPair(): Promise<CryptoKeyPair> {
  * Creates a JWT with the given key and data.
  *
  * @param {CryptoKey} key - The HMAC key or RSA private key for signing.
- * @param {T} data - The data to be included in the JWT payload.
+ * @param {JWTPayload} data - The data to be included in the JWT payload.
  * @returns {Promise<string>} A promise resolving to the encoded JWT string.
  */
 export async function createJWT<T>(
     key: CryptoKey,
-    data: T,
+    data: JWTPayload,
 ): Promise<string> {
     const alg = key.algorithm.name;
     const header = { alg, typ: "JWT" };
@@ -74,15 +75,16 @@ export async function createJWT<T>(
  *
  * @param {CryptoKey} key - The HMAC key or RSA public key for verification.
  * @param {string} jwt - The encoded JWT string.
- * @returns {Promise<Record<string, any>>} A promise resolving to an object representing the decoded JWT payload.
+ * @returns {Promise<JWTPayload>} A promise resolving to an object representing the decoded JWT payload.
  * @throws {JWTFormatError} If the JWT has an invalid format.
  * @throws {JWTValidationError} If the JWT signature verification fails.
  */
 export async function parseJWT(
     key: CryptoKey,
     jwt: string,
-    // deno-lint-ignore no-explicit-any
-): Promise<Record<string, any>> {
+    validateStandardClaims: boolean = false,
+    clockSkewLeewaySeconds: number = 60,
+): Promise<JWTPayload> {
     const jwtParts = jwt.split(".");
     if (jwtParts.length !== 3) {
         throw new JWTFormatError("Invalid JWT format");
@@ -97,5 +99,29 @@ export async function parseJWT(
     if (!isValid) {
         throw new JWTValidationError("JWT verification failed");
     }
-    return JSON.parse(textDecode(decodeBase64Url(jwtParts[1])));
+
+    const payload = JSON.parse(textDecode(decodeBase64Url(jwtParts[1])));
+
+    // Validate standard claims only if requested
+    if (validateStandardClaims) {
+        // Expiration (exp) check with leeway
+        if (payload.exp) {
+            const currentTimestamp = Math.floor(Date.now() / 1000);
+            if (payload.exp < currentTimestamp - clockSkewLeewaySeconds) {
+                throw new JWTValidationError("JWT has expired");
+            }
+        } else {
+            throw new JWTValidationError("Missing required claim: 'exp'");
+        }
+
+        // Not Before (nbf) check with leeway
+        if (payload.nbf) {
+            const currentTimestamp = Math.floor(Date.now() / 1000);
+            if (payload.nbf > currentTimestamp + clockSkewLeewaySeconds) {
+                throw new JWTValidationError("JWT is not yet valid");
+            }
+        }
+    }
+
+    return payload;
 }
