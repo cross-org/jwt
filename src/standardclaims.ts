@@ -1,8 +1,9 @@
 /**
- * Represents the standard claims that may be included in a JWT.
- * See RFC 7519 (https://tools.ietf.org/html/rfc7519) for details.
+ * Represents the payload of a JWT. Includes optional standard claims and allows for the
+ * addition of custom properties.
+ * See RFC 7519 (https://tools.ietf.org/html/rfc7519) for details on standard claims.
  */
-interface StandardClaims {
+export interface JWTPayload {
     /**
      * Issuer: Identifies the principal that issued the JWT.
      */
@@ -42,13 +43,10 @@ interface StandardClaims {
      * JWT ID: Provides a unique identifier for the JWT.
      */
     jti?: string;
-}
 
-/**
- * Represents the payload of a JWT. Includes optional standard claims and allows for the
- * addition of custom properties.
- */
-export interface JWTPayload extends StandardClaims {
+    /**
+     * Allows for the inclusion of custom properties with string keys and values of any type.
+     */
     // deno-lint-ignore no-explicit-any
-    [key: string]: any; // Allow additional custom properties
+    [key: string]: any;
 }
