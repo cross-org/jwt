@@ -23,13 +23,13 @@ Part of the @cross suite - check out our growing collection of cross-runtime too
 ## Installation
 
 ```bash
-#For Deno
+# For Deno
 deno add @cross/jwt
 
-#For Bun
+# For Bun
 bunx jsr add @cross/jwt
 
-#For Node.js
+# For Node.js
 npx jsr add @cross/jwt
 ```
 
@@ -37,16 +37,18 @@ npx jsr add @cross/jwt
 
 **Helper Functions**
 
-- **`generateKey(keyStr: string, allowInsecureKeyLengths?: boolean = false): Promise<CryptoKey>`**
+- **`generateKey(keyStr: string, options?: KeyOptions): Promise<CryptoKey>`**
   - Generates an HMAC key from a provided secret string.
   - **`keyStr`**: The secret string to use as the key.
-  - **`allowInsecureKeyLengths` (optional):** If `true`, bypasses the minimum 32-byte secret length requirement. **Use
-    with caution, as shorter secret strings weaken security.**
+  - **`options`**: Can be one of the following:
+    - `hash` (optional): "SHA-256", "SHA-384" or "SHA-512"
+    - `allowInsecureKeyLengths` (optional): If true, bypasses the minimum 32-byte secret length requirement. Use with
+      caution, as shorter secret strings weaken security.
 
-- **`generateKeyPair(): Promise<CryptoKeyPair>`**
+- **`generateKeyPair(options?: KeyPairOptions): Promise<CryptoKeyPair>`**
   - Generates an RSA key pair (public and private keys).
-
-**Core Functions**
+  - **`options`**: Can be one of the following:
+    - `hash` (optional): "SHA-256", "SHA-384" or "SHA-512" **Core Functions**
 
 - **`createJWT(payload: JWTPayload, key: CryptoKey | string | Options, options?: Options): Promise<string>`**
   - Creates a signed JWT.

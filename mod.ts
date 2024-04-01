@@ -13,23 +13,55 @@ import type { JWTPayload } from "./src/standardclaims.ts";
 export type { JWTPayload } from "./src/standardclaims.ts";
 
 /**
+ * Options for customizing the generation of HMAC keys.
+ */
+export interface KeyOptions {
+    /**
+     * The hash algorithm to use for the HMAC key.
+     * Supported values: "SHA-256", "SHA-384", or "SHA-512".
+     */
+    hash: "SHA-256" | "SHA-384" | "SHA-512";
+
+    /**
+     * If true, allows the generation of keys with lengths considered insecure. Use with caution.
+     */
+    allowInsecureKeyLengths?: boolean;
+}
+
+/**
+ * Options for customizing the generation of RSA key pairs.
+ */
+export interface KeyPairOptions {
+    /**
+     * The hash algorithm to use for RSA signing and padding operations.
+     * Supported values: "SHA-256", "SHA-384", or "SHA-512".
+     */
+    hash: "SHA-256" | "SHA-384" | "SHA-512";
+}
+
+/**
  * Generates an HMAC key from a provided secret string.
  *
  * @param {string} keyStr - The secret string to use as the key.
- * @param {boolean} allowInsecureKeyLengths - If true, bypasses the minimum length check.
+ * @param {KeyOptions} options - options for controlling key generation
  * @returns {Promise<CryptoKey>} A promise resolving to the generated HMAC key.
  * @throws {JWTValidationError} If the secret string is less than 32 bytes long and insecure lengths are not allowed.
  */
-export async function generateKey(keyStr: string, allowInsecureKeyLengths: boolean = false): Promise<CryptoKey> {
+export async function generateKey(keyStr: string, options?: KeyOptions): Promise<CryptoKey> {
+    const mergedOptions = simpleMerge({
+        hash: "SHA-256",
+        allowInsecureKeyLengths: false,
+    }, options);
     const encodedKey = textEncode(keyStr);
-    if (!allowInsecureKeyLengths && encodedKey.byteLength < 32) {
+
+    if (!mergedOptions?.allowInsecureKeyLengths && encodedKey.byteLength < 32) {
         throw new JWTValidationError("JWT Secret String must be at least 32 bytes long");
     }
 
     return await crypto.subtle.importKey(
         "raw",
         encodedKey,
-        { name: "HMAC", hash: "SHA-256" },
+        { name: "HMAC", hash: mergedOptions?.hash! },
         false,
         ["sign", "verify"],
     );
@@ -38,15 +70,20 @@ export async function generateKey(keyStr: string, allowInsecureKeyLengths: boole
 /**
  * Generates an RSA key pair (public and private key).
  *
+ * @param {KeyPairOptions} options - options for controlling key generation
  * @returns {Promise<CryptoKeyPair>} A promise resolving to the generated RSA key pair.
  */
-export async function generateKeyPair(): Promise<CryptoKeyPair> {
+export async function generateKeyPair(options?: KeyPairOptions): Promise<CryptoKeyPair> {
+    const mergedOptions = simpleMerge({
+        hash: "SHA-256",
+    }, options);
+
     return await crypto.subtle.generateKey(
         {
             name: "RSASSA-PKCS1-v1_5",
             modulusLength: 2048,
             publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-            hash: "SHA-256",
+            hash: mergedOptions?.hash!,
         },
         true,
         ["sign", "verify"],
