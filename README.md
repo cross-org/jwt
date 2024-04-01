@@ -1,7 +1,3 @@
-# WIP
-
-Work in progress
-
 ## @cross/jwt
 
 [![JSR Version](https://jsr.io/badges/@cross/jwt)](https://jsr.io/@cross/jwt)
