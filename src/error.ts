@@ -14,6 +14,19 @@ export class JWTFormatError extends Error {
 }
 
 /**
+ * Represents an error caused by an unsupported algorithm
+ */
+export class JWTUnsupportedAlgorithmError extends Error {
+    /**
+     * @param {string} message - A descriptive message about the issue.
+     */
+    constructor(message: string) {
+        super(message);
+        this.name = "JWTUnsupportedAlgorithmError";
+    }
+}
+
+/**
  * Represents a general error that occurred during JWT validation.
  */
 export class JWTValidationError extends Error {

@@ -2,19 +2,6 @@
 import { decodeBase64Url, encodeBase64Url, textEncode } from "../encoding.ts";
 
 /**
- * Represents an RSA private key, extending the standard CryptoKey interface.
- */
-export interface PrivateKey extends CryptoKey {
-    privateKey: CryptoKey;
-}
-/**
- * Represents an RSA public key, extending the standard CryptoKey interface.
- */
-export interface PublicKey extends CryptoKey {
-    publicKey: CryptoKey;
-}
-
-/**
  * Signs data using an RSA private key (RSASSA-PKCS1-v1_5 algorithm).
  *
  * @param {CryptoKey} privateKey - The RSA private key.

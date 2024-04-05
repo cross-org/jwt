@@ -5,114 +5,158 @@ import {
     JWTFormatError,
     JWTNotYetValidError,
     JWTRequiredClaimMissingError,
+    JWTUnsupportedAlgorithmError,
     JWTValidationError,
 } from "./src/error.ts";
+import { algorithmMapping, detectAlgorithm } from "./src/utils.ts";
+import type { JWTOptions, SupportedGenerateKeyAlgorithms, SupportedGenerateKeyPairAlgorithms } from "./src/utils.ts";
 import { decodeBase64Url, encodeBase64Url, textDecode, textEncode } from "./src/encoding.ts";
 import { sign, verify } from "./src/jwt.ts";
 import type { JWTPayload } from "./src/standardclaims.ts";
-export type { JWTPayload } from "./src/standardclaims.ts";
+
+export type { JWTPayload };
+export type { JWTOptions };
+export type { SupportedGenerateKeyAlgorithms, SupportedGenerateKeyPairAlgorithms };
 
 /**
- * Options for customizing the generation of HMAC keys.
+ * Options for key generation
  */
-export interface KeyOptions {
+export interface GenerateKeyOptions {
     /**
-     * The hash algorithm to use for the HMAC key.
-     * Supported values: "SHA-256", "SHA-384", or "SHA-512".
+     * The HMAC algorithm to use for key generation. Defaults to 'HS256'.
      */
-    hash: "SHA-256" | "SHA-384" | "SHA-512";
-
+    algorithm?: SupportedGenerateKeyAlgorithms;
+  
     /**
-     * If true, allows the generation of keys with lengths considered insecure. Use with caution.
+     * If true, allows generation of keys with lengths shorter than recommended security guidelines.
+     * Use with caution, as shorter keys are less secure.
      */
     allowInsecureKeyLengths?: boolean;
-}
-
-/**
- * Options for customizing the generation of RSA key pairs.
- */
-export interface KeyPairOptions {
-    /**
-     * The hash algorithm to use for RSA signing and padding operations.
-     * Supported values: "SHA-256", "SHA-384", or "SHA-512".
-     */
-    hash: "SHA-256" | "SHA-384" | "SHA-512";
-}
+  }
+  
 
 /**
  * Generates an HMAC key from a provided secret string.
  *
  * @param {string} keyStr - The secret string to use as the key.
- * @param {KeyOptions} options - options for controlling key generation
+ * @param {SupportedGenerateKeyAlgorithms} algorithm - The HMAC algorithm to use (default: "HS256").
  * @returns {Promise<CryptoKey>} A promise resolving to the generated HMAC key.
- * @throws {JWTValidationError} If the secret string is less than 32 bytes long and insecure lengths are not allowed.
+ * @throws {JWTUnsupportedAlgorithmError} If the provided algorithm is not supported.
  */
-export async function generateKey(keyStr: string, options?: KeyOptions): Promise<CryptoKey> {
-    const mergedOptions = simpleMerge({
-        hash: "SHA-256",
-        allowInsecureKeyLengths: false,
-    }, options);
-    const encodedKey = textEncode(keyStr);
+export async function generateKey(
+    keyStr: string,
+    options: SupportedGenerateKeyAlgorithms | GenerateKeyOptions = "HS256",
+): Promise<CryptoKey> {
+    let algorithm: SupportedGenerateKeyAlgorithms = "HS256";
+    let allowInsecureKeyLengths: boolean = false;
 
-    if (!mergedOptions?.allowInsecureKeyLengths && encodedKey.byteLength < 32) {
-        throw new JWTValidationError("JWT Secret String must be at least 32 bytes long");
+    if (typeof options === "object") {
+        algorithm = options.algorithm || algorithm;
+        allowInsecureKeyLengths = options.allowInsecureKeyLengths || allowInsecureKeyLengths;
+    } else {
+        algorithm = options;
     }
 
+    const encodedKey = textEncode(keyStr);
+
+    if (!algorithm.startsWith("HS") || !(algorithm in algorithmMapping)) {
+        throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm");
+    }
+
+    const minimumLength = {
+        HS256: 32,
+        HS384: 48,
+        HS512: 64,
+    }[algorithm as SupportedGenerateKeyAlgorithms];
+
+    if (!allowInsecureKeyLengths && encodedKey.byteLength < minimumLength) {
+        throw new JWTValidationError(
+            `JWT Secret String for ${algorithm} should be at least ${minimumLength} bytes long`,
+        );
+    }
+
+    const algo = algorithmMapping[algorithm!] as HmacKeyGenParams;
     return await crypto.subtle.importKey(
         "raw",
         encodedKey,
-        { name: "HMAC", hash: mergedOptions?.hash! },
+        algo,
         false,
         ["sign", "verify"],
     );
 }
 
 /**
- * Generates an RSA key pair (public and private key).
- *
- * @param {KeyPairOptions} options - options for controlling key generation
- * @returns {Promise<CryptoKeyPair>} A promise resolving to the generated RSA key pair.
+ * Options for key pair generation.
  */
-export async function generateKeyPair(options?: KeyPairOptions): Promise<CryptoKeyPair> {
-    const mergedOptions = simpleMerge({
-        hash: "SHA-256",
-    }, options);
-
-    return await crypto.subtle.generateKey(
-        {
-            name: "RSASSA-PKCS1-v1_5",
-            modulusLength: 2048,
-            publicExponent: new Uint8Array([0x01, 0x00, 0x01]),
-            hash: mergedOptions?.hash!,
-        },
-        true,
-        ["sign", "verify"],
-    );
-}
+export interface GenerateKeyPairOptions {
+    /**
+     * The algorithm to use for key pair generation. Defaults to 'RS256'.
+     */
+    algorithm?: SupportedGenerateKeyPairAlgorithms;
+  
+    /**
+     * The desired length of the RSA modulus in bits. Larger values offer greater security, 
+     * but impact performance. A common default is 2048.
+     */
+    modulusLength?: number;
+  }
+  
 
 /**
- * Options for customizing JWT creation and parsing behavior.
+ * Generates an RSA or ECDSA key pair (public and private key).
+ *
+ * @param {SupportedGenerateKeyPairAlgorithms} algorithm - The algorithm to use (default: "RS256").
+ * @returns {Promise<CryptoKeyPair>} A promise resolving to the generated key pair.
+ * @throws {JWTUnsupportedAlgorithmError} If the provided algorithm is not supported.
  */
-export interface JWTOptions {
-    /**
-     * If true, the 'iat' (issued at) claim will not be automatically added to the JWT payload during creation.
-     */
-    NoIat?: boolean;
+export async function generateKeyPair(
+    options: SupportedGenerateKeyPairAlgorithms | GenerateKeyPairOptions = "RS256",
+): Promise<CryptoKeyPair> {
+    let algorithm: SupportedGenerateKeyPairAlgorithms = "RS256";
+    let modulusLength: number = 2048;
 
-    /**
-     * If true, the 'exp' (expiration time) claim will be validated during creation and parsing.
-     */
-    validateExp?: boolean;
+    if (typeof options === "object") {
+        algorithm = options.algorithm || algorithm;
+        modulusLength = options.modulusLength || modulusLength;
+    } else {
+        algorithm = options;
+    }
 
-    /**
-     *  If true, the 'nbf' (not before) claim will be validated during creation and parsing.
-     */
-    validateNbf?: boolean;
+    if (
+        !(algorithm.startsWith("RS") || algorithm.startsWith("ES") || algorithm.startsWith("PS")) ||
+        !(algorithm in algorithmMapping)
+    ) {
+        throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm");
+    }
 
-    /**
-     * The number of seconds of leeway to allow for clock skew during expiration validation. (Default: 60)
-     */
-    clockSkewLeewaySeconds?: number;
+    if (algorithm.startsWith("RS")) {
+        const algo = algorithmMapping[algorithm!] as RsaHashedKeyGenParams;
+        algo.modulusLength = modulusLength;
+        algo.publicExponent = new Uint8Array([0x01, 0x00, 0x01]);
+        return await crypto.subtle.generateKey(
+            algo,
+            true,
+            ["sign", "verify"],
+        );
+    } else if (algorithm.startsWith("ES")) {
+        const algo = algorithmMapping[algorithm!] as EcKeyGenParams;
+        return await crypto.subtle.generateKey(
+            algo,
+            true,
+            ["sign", "verify"],
+        );
+    } else if (algorithm.startsWith("PS")) {
+        const algo = algorithmMapping[algorithm!] as RsaHashedKeyGenParams;
+        algo.modulusLength = modulusLength;
+        algo.publicExponent = new Uint8Array([0x01, 0x00, 0x01]);
+        return await crypto.subtle.generateKey(
+            algo,
+            true,
+            ["sign", "verify"],
+        );
+    } else {
+        throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm");
+    }
 }
 
 /**
@@ -130,7 +174,7 @@ const defaultOptions: JWTOptions = {
  * @param {JWTOptions} options - Options to customize JWT creation behavior.
  * @returns {Promise<string>} A promise resolving to the encoded JWT string.
  */
-export async function createJWT(payload: JWTPayload, key: string, options?: JWTOptions): Promise<string>;
+export async function signJWT(payload: JWTPayload, key: string, options?: JWTOptions): Promise<string>;
 /**
  * Creates a JWT with the given key and payload.
  *
@@ -139,19 +183,20 @@ export async function createJWT(payload: JWTPayload, key: string, options?: JWTO
  * @param {JWTOptions} options - Options to customize JWT creation behavior.
  * @returns {Promise<string>} A promise resolving to the encoded JWT string.
  */
-export async function createJWT(payload: JWTPayload, key: CryptoKey, options?: JWTOptions): Promise<string>;
+export async function signJWT(payload: JWTPayload, key: CryptoKey, options?: JWTOptions): Promise<string>;
 
 /**
- * Creates a JWT with the given key and payload.
+ * Creates a signed JWT.
  *
- * @param {JWTPayload} payload - The payload to be included in the JWT payload.
- * @param {CryptoKey | string} key - The HMAC key or RSA private key for signing, or a string to generate a key from.
- * @param {JWTOptions} options - Options to customize JWT creation behavior.
+ * @param {JWTPayload} payload - The data to include in the JWT.
+ * @param {CryptoKey | string} key - The HMAC key, RSA/ECDSA private key, or a string to generate a key from.
+ * @param {JWTOptions} [options] - Options to customize JWT creation (optional).
  * @returns {Promise<string>} A promise resolving to the encoded JWT string.
+ * @throws {JWTUnsupportedAlgorithmError} If the key algorithm is not supported.
  * @throws {JWTValidationError} If validation is enabled and there are issues with the 'exp' or 'nbf' claims.
  * @throws {JWTRequiredClaimMissingError} If validation is enabled and the 'exp' or 'nbf' claims are missing.
  */
-export async function createJWT(
+export async function signJWT(
     payload: JWTPayload,
     key: CryptoKey | string,
     options?: JWTOptions,
@@ -159,8 +204,12 @@ export async function createJWT(
     options = simpleMerge(defaultOptions, options);
 
     key = (typeof key === "string") ? await generateKey(key) : key;
+    const keyAlgorithm = detectAlgorithm(key);
+    if (!keyAlgorithm || !(keyAlgorithm in algorithmMapping)) {
+        throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm");
+    }
 
-    if (!options?.NoIat && !payload.iat) {
+    if (options?.setIat && !payload.iat) {
         payload.iat = Math.floor(Date.now() / 1000);
     }
 
@@ -186,15 +235,14 @@ export async function createJWT(
         }
     }
 
-    const alg = key.algorithm.name;
-    const header = { alg, typ: "JWT" };
+    const header = { alg: key.algorithm.name, typ: "JWT" };
     const encodedHeader = encodeBase64Url(textEncode(JSON.stringify(header)));
     const encodedPayload = encodeBase64Url(textEncode(JSON.stringify(payload)));
 
     const signature = await sign(
-        alg,
         key,
         `${encodedHeader}.${encodedPayload}`,
+        options,
     );
 
     return `${encodedHeader}.${encodedPayload}.${signature}`;
@@ -221,12 +269,13 @@ export async function validateJWT(jwt: string, key: string, options?: JWTOptions
 export async function validateJWT(jwt: string, key: CryptoKey, options?: JWTOptions): Promise<JWTPayload>;
 
 /**
- * Validates and parses a JWT, verifies it with the given key, and returns the contained payload.
+ * Validates and parses a JWT, verifying it with the given key.
  *
- * @param {CryptoKey | string} key - The HMAC key or RSA public key for verification, or a string to generate a key from.
  * @param {string} jwt - The encoded JWT string.
- * @param {JWTOptions} options - Options to customize JWT parsing behavior.
- * @returns {Promise<JWTPayload>} A promise resolving to an object representing the decoded JWT payload.
+ * @param {CryptoKey | string} key - The HMAC key, RSA/ECDSA public key, or a string to generate a key from.
+ * @param {JWTOptions} [options] - Options to customize JWT validation (optional).
+ * @returns {Promise<JWTPayload>} A promise resolving to the decoded JWT payload.
+ * @throws {JWTUnsupportedAlgorithmError} If the key algorithm is not supported.
  * @throws {JWTFormatError} If the JWT has an invalid format.
  * @throws {JWTValidationError} If the JWT signature verification fails.
  * @throws {JWTExpiredError} If the JWT has expired (and expiration validation is enabled).
@@ -247,11 +296,16 @@ export async function validateJWT(
 
     key = (typeof key === "string") ? await generateKey(key) : key;
 
-    const header = JSON.parse(textDecode(decodeBase64Url(jwtParts[0]))) as { alg: string };
+    const keyAlgorithm = detectAlgorithm(key);
+
+    if (!keyAlgorithm || !(keyAlgorithm in algorithmMapping)) {
+        throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm");
+    }
+
     const unsignedData = `${jwtParts[0]}.${jwtParts[1]}`;
     const signature = jwtParts[2];
 
-    const isValid = await verify(header.alg, key, unsignedData, signature);
+    const isValid = await verify(key, unsignedData, signature, options);
 
     if (!isValid) {
         throw new JWTValidationError("JWT verification failed");

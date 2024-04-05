@@ -33,20 +33,29 @@ npx jsr add @cross/jwt
 
 **Helper Functions**
 
-- **`generateKey(keyStr: string, options?: KeyOptions): Promise<CryptoKey>`**
+- **`generateKey(keyStr: string, options?: SupportedGenerateKeyAlgorithms | Options): Promise<CryptoKey>`**
   - Generates an HMAC key from a provided secret string.
   - **`keyStr`**: The secret string to use as the key.
   - **`options`**: Can be one of the following:
-    - `hash` (optional): "SHA-256", "SHA-384" or "SHA-512"
-    - `allowInsecureKeyLengths` (optional): If true, bypasses the minimum 32-byte secret length requirement. Use with
-      caution, as shorter secret strings weaken security.
+    - **`SupportedGenerateKeyAlgorithms`** (string): "HS256", "HS384", or "HS512"
+    - OR
+    - **GenerateKeyOptions Object**
+      - `algorithm` (optional): "HS256", "HS384" or "HS512"
+      - `allowInsecureKeyLengths` (optional): If true, bypasses the minimum recommended secret length requirement. Use
+        with caution, as shorter secret strings weaken security.
 
 - **`generateKeyPair(options?: KeyPairOptions): Promise<CryptoKeyPair>`**
   - Generates an RSA key pair (public and private keys).
   - **`options`**: Can be one of the following:
-    - `hash` (optional): "SHA-256", "SHA-384" or "SHA-512" **Core Functions**
+    - **`SupportedGenerateKeyPairAlgorithms`** (string): For example "RS256" or "ES256" See table below. Defaults to
+      "RS256".
+    - OR
+    - **GenerateKeyPairOptions Object**
+      - `algorithm` (optional): For example "RS256" or "ES256" See table below. Defaults to "RS256".
+      - `modulusLength` (optional): Modulus length for RSA keys, common values are 2048, 3072 and 4096. Defaults
+        to 2048.
 
-- **`createJWT(payload: JWTPayload, key: CryptoKey | string | Options, options?: Options): Promise<string>`**
+- **`signJWT(payload: JWTPayload, key: CryptoKey | string | Options, options?: Options): Promise<string>`**
   - Creates a signed JWT.
   - **`payload`**: The data to include in the JWT.
   - **`key`**: Can be one of the following:
@@ -73,64 +82,82 @@ The `JWTOptions` object can be used to provide flexibility when creating JWTs:
  * Options for customizing JWT creation and parsing behavior.
  */
 interface JWTOptions {
-    // If true, the 'iat' (issued at) claim will not be automatically added to the JWT payload during creation.
-    NoIat?: boolean;
+    // If true, the 'iat' (issued at) claim will be automatically added to the JWT payload during creation.
+    setIat?: boolean;
     // If true, the 'exp' (expiration time) claim will be validated during creation and parsing.
     validateExp?: boolean;
     // If true, the 'nbf' (not before) claim will be validated during creation and parsing.
     validateNbf?: boolean;
     //The number of seconds of leeway to allow for clock skew during expiration validation. (Default: 60)
     clockSkewLeewaySeconds?: number;
+    //Salt length for RSA-PSS sign and verify (default: 32).
+    saltLength?: number;
 }
 ```
+
+## Supported algorithms
+
+| Algorithm | Description                                    |
+| --------- | ---------------------------------------------- |
+| HS256     | HMAC using SHA-256                             |
+| HS384     | HMAC using SHA-384                             |
+| HS512     | HMAC using SHA-512                             |
+| RS256     | RSASSA-PKCS1-v1_5 using SHA-256                |
+| RS384     | RSASSA-PKCS1-v1_5 using SHA-384                |
+| RS512     | RSASSA-PKCS1-v1_5 using SHA-512                |
+| ES256     | ECDSA using P-256 and SHA-256                  |
+| ES384     | ECDSA using P-384 and SHA-384                  |
+| PS256     | RSASSA-PSS using SHA-256 and MGF1 with SHA-256 |
+| PS384     | RSASSA-PSS using SHA-384 and MGF1 with SHA-384 |
+| PS512     | RSASSA-PSS using SHA-512 and MGF1 with SHA-512 |
 
 ## Usage
 
 The most common way to sign and verify JWTs is using HMAC.
 
 ```javascript
-import { createJWT, validateJWT } from "@cross/jwt";
+import { signJWT, validateJWT } from "@cross/jwt";
 
-// Signing the JWT with HMAC by default, here with a string secret used to generate a key.
+// Signing the JWT with HS256 by default, here with a string secret used to generate a key.
 const secret = "mySuperSecretAtLeast32CharsLong!";
-const jwt = await createJWT({ hello: "world" }, secret);
+const jwt = await signJWT({ hello: "world" }, secret);
 
 // Verifying and parsing the content of the JWT.
 const data = await validateJWT(jwt, secret);
 console.log(data);
-//Outputs: { hello: "world", iat: 1711973832 }
+//Outputs: { hello: "world" }
 ```
 
 Here is how you can use it with a RSA key pair.
 
 ```javascript
-import { createJWT, generateKeyPair, validateJWT } from "@cross/jwt";
+import { generateKeyPair, signJWT, validateJWT } from "@cross/jwt";
 
 // Signing the JWT with a RSA private key. You can generate a key pair with the generateKeyPair() helper function.
 const { privateKey, publicKey } = await generateKeyPair();
-const jwt = await createJWT({ userId: 123 }, privateKey);
+const jwt = await signJWT({ userId: 123 }, privateKey);
 
 // Verifying and parsing the content of the JWT with the public key.
 const data = await validateJWT(jwt, publicKey);
 console.log(data);
-//Outputs: { userId: 123, iat: 1711977982 }
+//Outputs: { userId: 123 }
 ```
 
-Usage with custom options to disable writing the 'iat' (issued at) claim to the JWT payload during creation.
+Usage with custom options to enable writing the 'iat' (issued at) claim to the JWT payload during creation.
 
 ```javascript
-import { createJWT, validateJWT } from "@cross/jwt";
+import { signJWT, validateJWT } from "@cross/jwt";
 
 const options = {
-    NoIat: true,
+    setIat: true,
 };
 
 const secret = "mySuperSecretAtLeast32CharsLong!";
-const jwt = await createJWT({ hello: "world" }, secret, options);
+const jwt = await signJWT({ hello: "world" }, secret, options);
 
 const data = await validateJWT(jwt, secret);
 console.log(data);
-//Outputs: { hello: "world"}
+//Outputs: { hello: "world", iat: 1711977982}
 ```
 
 ## Issues
