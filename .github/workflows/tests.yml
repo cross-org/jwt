@@ -10,3 +10,4 @@ jobs:
     with:
       entrypoint: mod.ts
       run_tests: false
+      lint_docs: false
