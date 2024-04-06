@@ -153,6 +153,8 @@ export async function generateKeyPair(
  */
 const defaultOptions: JWTOptions = {
     clockSkewLeewaySeconds: 60,
+    validateExp: false,
+    validateNbf: false,
 };
 
 /**
@@ -205,7 +207,7 @@ export async function signJWT(
     if (options?.validateExp) {
         if (payload.exp) {
             const currentTimestamp = Math.floor(Date.now() / 1000);
-            if (payload.exp <= currentTimestamp) {
+            if (currentTimestamp >= payload.exp) {
                 throw new JWTValidationError("JWT 'exp' claim cannot be in the past");
             }
         } else {
@@ -216,7 +218,7 @@ export async function signJWT(
     if (options?.validateNbf) {
         if (payload.nbf) {
             const currentTimestamp = Math.floor(Date.now() / 1000);
-            if (currentTimestamp <= payload.nbf) {
+            if (currentTimestamp > payload.nbf) {
                 throw new JWTValidationError("JWT 'nbf' claim cannot be in the past");
             }
         } else {
@@ -305,9 +307,9 @@ export async function validateJWT(
     if (options?.validateExp) {
         if (payload.exp) {
             const currentTimestamp = Math.floor(Date.now() / 1000);
-            const effectiveExpiry = currentTimestamp - (options?.clockSkewLeewaySeconds || 0);
+            const effectiveExpiry = payload.exp + (options?.clockSkewLeewaySeconds || 0);
 
-            if (payload.exp < effectiveExpiry) {
+            if (currentTimestamp > effectiveExpiry) {
                 throw new JWTExpiredError();
             }
         } else {
@@ -318,9 +320,9 @@ export async function validateJWT(
     if (options?.validateNbf) {
         if (payload.nbf) {
             const currentTimestamp = Math.floor(Date.now() / 1000);
-            const effectiveNotBefore = currentTimestamp + (options?.clockSkewLeewaySeconds || 0);
+            const effectiveNotBefore = payload.nbf - (options?.clockSkewLeewaySeconds || 0);
 
-            if (payload.nbf > effectiveNotBefore) {
+            if (currentTimestamp < effectiveNotBefore) {
                 throw new JWTNotYetValidError();
             }
         } else {
