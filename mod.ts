@@ -26,14 +26,13 @@ export interface GenerateKeyOptions {
      * The HMAC algorithm to use for key generation. Defaults to 'HS256'.
      */
     algorithm?: SupportedGenerateKeyAlgorithms;
-  
+
     /**
      * If true, allows generation of keys with lengths shorter than recommended security guidelines.
      * Use with caution, as shorter keys are less secure.
      */
     allowInsecureKeyLengths?: boolean;
-  }
-  
+}
 
 /**
  * Generates an HMAC key from a provided secret string.
@@ -45,16 +44,16 @@ export interface GenerateKeyOptions {
  */
 export async function generateKey(
     keyStr: string,
-    options: SupportedGenerateKeyAlgorithms | GenerateKeyOptions = "HS256",
+    optionsOrAlgorithm: SupportedGenerateKeyAlgorithms | GenerateKeyOptions = "HS256",
 ): Promise<CryptoKey> {
     let algorithm: SupportedGenerateKeyAlgorithms = "HS256";
     let allowInsecureKeyLengths: boolean = false;
 
-    if (typeof options === "object") {
-        algorithm = options.algorithm || algorithm;
-        allowInsecureKeyLengths = options.allowInsecureKeyLengths || allowInsecureKeyLengths;
+    if (typeof optionsOrAlgorithm === "object") {
+        algorithm = optionsOrAlgorithm.algorithm || algorithm;
+        allowInsecureKeyLengths = optionsOrAlgorithm.allowInsecureKeyLengths || allowInsecureKeyLengths;
     } else {
-        algorithm = options;
+        algorithm = optionsOrAlgorithm;
     }
 
     const encodedKey = textEncode(keyStr);
@@ -93,14 +92,13 @@ export interface GenerateKeyPairOptions {
      * The algorithm to use for key pair generation. Defaults to 'RS256'.
      */
     algorithm?: SupportedGenerateKeyPairAlgorithms;
-  
+
     /**
-     * The desired length of the RSA modulus in bits. Larger values offer greater security, 
+     * The desired length of the RSA modulus in bits. Larger values offer greater security,
      * but impact performance. A common default is 2048.
      */
     modulusLength?: number;
-  }
-  
+}
 
 /**
  * Generates an RSA or ECDSA key pair (public and private key).
@@ -110,16 +108,16 @@ export interface GenerateKeyPairOptions {
  * @throws {JWTUnsupportedAlgorithmError} If the provided algorithm is not supported.
  */
 export async function generateKeyPair(
-    options: SupportedGenerateKeyPairAlgorithms | GenerateKeyPairOptions = "RS256",
+    optionsOrAlgorithm: SupportedGenerateKeyPairAlgorithms | GenerateKeyPairOptions = "RS256",
 ): Promise<CryptoKeyPair> {
     let algorithm: SupportedGenerateKeyPairAlgorithms = "RS256";
     let modulusLength: number = 2048;
 
-    if (typeof options === "object") {
-        algorithm = options.algorithm || algorithm;
-        modulusLength = options.modulusLength || modulusLength;
+    if (typeof optionsOrAlgorithm === "object") {
+        algorithm = optionsOrAlgorithm.algorithm || algorithm;
+        modulusLength = optionsOrAlgorithm.modulusLength || modulusLength;
     } else {
-        algorithm = options;
+        algorithm = optionsOrAlgorithm;
     }
 
     if (
@@ -129,7 +127,7 @@ export async function generateKeyPair(
         throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm");
     }
 
-    if (algorithm.startsWith("RS")) {
+    if (algorithm.startsWith("RS") || algorithm.startsWith("PS")) {
         const algo = algorithmMapping[algorithm!] as RsaHashedKeyGenParams;
         algo.modulusLength = modulusLength;
         algo.publicExponent = new Uint8Array([0x01, 0x00, 0x01]);
@@ -140,15 +138,6 @@ export async function generateKeyPair(
         );
     } else if (algorithm.startsWith("ES")) {
         const algo = algorithmMapping[algorithm!] as EcKeyGenParams;
-        return await crypto.subtle.generateKey(
-            algo,
-            true,
-            ["sign", "verify"],
-        );
-    } else if (algorithm.startsWith("PS")) {
-        const algo = algorithmMapping[algorithm!] as RsaHashedKeyGenParams;
-        algo.modulusLength = modulusLength;
-        algo.publicExponent = new Uint8Array([0x01, 0x00, 0x01]);
         return await crypto.subtle.generateKey(
             algo,
             true,

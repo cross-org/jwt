@@ -10,11 +10,10 @@ Part of the @cross suite - check out our growing collection of cross-runtime too
 
 ## Features
 
-- **Secure Cryptography:** Supports HMAC (SHA-256) and RSA (RSASSA-PKCS1-v1_5) signing algorithms for robust JWT
-  protection.
+- **Secure Cryptography:** Supports HMAC, RSA, RSA-PSS and ECDSA signing algorithms for robust JWT protection.
 - **Cross-Platform:** Functions seamlessly across Deno, Bun, and Node.js environments.
 - **Intuitive API:** Provides simple-to-use functions for JWT creation, parsing, signing, and verification.
-- **Key Management:** Includes helpers for generating HMAC secret keys and RSA key pairs.
+- **Key Management:** Includes helpers for generating HMAC secret keys and RSA or ECDSA key pairs.
 
 ## Installation
 
@@ -33,29 +32,23 @@ npx jsr add @cross/jwt
 
 **Helper Functions**
 
-- **`generateKey(keyStr: string, options?: SupportedGenerateKeyAlgorithms | Options): Promise<CryptoKey>`**
+- **`generateKey(keyStr: string, optionsOrAlgorithm?: SupportedGenerateKeyAlgorithms | Options): Promise<CryptoKey>`**
   - Generates an HMAC key from a provided secret string.
   - **`keyStr`**: The secret string to use as the key.
   - **`options`**: Can be one of the following:
     - **`SupportedGenerateKeyAlgorithms`** (string): "HS256", "HS384", or "HS512"
     - OR
-    - **GenerateKeyOptions Object**
-      - `algorithm` (optional): "HS256", "HS384" or "HS512"
-      - `allowInsecureKeyLengths` (optional): If true, bypasses the minimum recommended secret length requirement. Use
-        with caution, as shorter secret strings weaken security.
+    - **`GenerateKeyOptions`** (Object): See below
 
-- **`generateKeyPair(options?: KeyPairOptions): Promise<CryptoKeyPair>`**
+- **`generateKeyPair(optionsOrAlgorithm?: KeyPairOptions): Promise<CryptoKeyPair>`**
   - Generates an RSA key pair (public and private keys).
   - **`options`**: Can be one of the following:
-    - **`SupportedGenerateKeyPairAlgorithms`** (string): For example "RS256" or "ES256" See table below. Defaults to
-      "RS256".
+    - **`SupportedGenerateKeyPairAlgorithms`** (string): For example "RS256" or "ES256" See supported algorithms below.
+      Defaults to "RS256".
     - OR
-    - **GenerateKeyPairOptions Object**
-      - `algorithm` (optional): For example "RS256" or "ES256" See table below. Defaults to "RS256".
-      - `modulusLength` (optional): Modulus length for RSA keys, common values are 2048, 3072 and 4096. Defaults
-        to 2048.
+    - **`GenerateKeyPairOptions`** (Object): See below
 
-- **`signJWT(payload: JWTPayload, key: CryptoKey | string | Options, options?: Options): Promise<string>`**
+- **`signJWT(payload: JWTPayload, key: CryptoKey | string, options?: Options): Promise<string>`**
   - Creates a signed JWT.
   - **`payload`**: The data to include in the JWT.
   - **`key`**: Can be one of the following:
@@ -73,7 +66,40 @@ npx jsr add @cross/jwt
     - String to generate an HMAC key
   - **`options`:** (optional) See `JWTOptions` below.
 
-**Options Object**
+**GenerateKeyOptions Object**
+
+The `GenerateKeyOptions` object can be used to provide flexibility when generating HMAC keys:
+
+```typescript
+/**
+ * Options for key generation
+ */
+interface GenerateKeyOptions {
+    //The HMAC algorithm to use for key generation. Defaults to 'HS256'.
+    algorithm?: SupportedGenerateKeyAlgorithms;
+    // Use with caution, as shorter keys are less secure.
+    allowInsecureKeyLengths?: boolean;
+}
+```
+
+**GenerateKeyPairOptions Object**
+
+The `GenerateKeyPairOptions` object can be used to provide flexibility when generating RSA key pairs:
+
+```typescript
+/**
+ * Options for key pair generation.
+ */
+interface GenerateKeyPairOptions {
+    //The algorithm to use for key pair generation. Defaults to 'RS256'.
+    algorithm?: SupportedGenerateKeyPairAlgorithms;
+    // The desired length of the RSA modulus in bits. Larger values offer greater
+    // security, but impact performance. A common default is 2048.
+    modulusLength?: number;
+}
+```
+
+**JWTOptions Object**
 
 The `JWTOptions` object can be used to provide flexibility when creating JWTs:
 
@@ -158,6 +184,55 @@ const jwt = await signJWT({ hello: "world" }, secret, options);
 const data = await validateJWT(jwt, secret);
 console.log(data);
 //Outputs: { hello: "world", iat: 1711977982}
+```
+
+Full example with standard JWT claims. See [RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1)
+
+```javascript
+import { generateKey, signJWT, validateJWT } from "@cross/jwt";
+import type { GenerateKeyOptions, JWTPayload } from "@cross/jwt";
+
+// Optional key generation, you could have a key already.
+// HS512 suggests 64 byte secret. Can be omitted with allowInsecureKeyLengths option.
+const keyOptions: GenerateKeyOptions = { algorithm: "HS512" };
+const secret = "mySuperSecretAtLeast64CharsLongmySuperSecretAtLeast64CharsLong!!";
+const key = await generateKey(secret, keyOptions);
+
+// JWT content with standard claims.
+const data: JWTPayload = {
+    // Standard Claims
+    iss: "https://your-api.com", // Issuer
+    sub: "user12345", // Subject
+    aud: ["clientApp1", "clientApp2"], // Audience (array in this case)
+    exp: Math.floor(Date.now() / 1000) + (60 * 60), // Expires in 1 hour
+    nbf: Math.floor(Date.now() / 1000), // Not Before (effective now)
+    iat: Math.floor(Date.now() / 1000), // Issued At
+
+    // Custom Properties
+    userId: 12345,
+    roles: ["admin", "editor"],
+};
+
+// Sign the JWT
+const jwt = await signJWT(data, key);
+
+// Validate the JWT
+const validatedData = await validateJWT(jwt, key);
+```
+
+Generate a RSA key pair with custom Modulus length. (only key generation)
+
+```javascript
+const keyPairOptions: GenerateKeyPairOptions = { algorithm: "RS256", modulusLength: 4096 };
+const { privateKey, publicKey } = await generateKeyPair(keyPairOptions);
+```
+
+Generate a HMAC key with short insecure secret, not recommended. (only key generation)
+
+```javascript
+const keyOptions: GenerateKeyOptions = { algorithm: "HS512", allowInsecureKeyLengths: true };
+const insecureString = "shortString";
+const key = await generateKey(insecureString, keyOptions);
 ```
 
 ## Issues
