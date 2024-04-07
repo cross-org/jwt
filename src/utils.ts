@@ -3,6 +3,10 @@
  */
 export interface JWTOptions {
     /**
+     * algorithm to use, will default to trying to parse one from the supplied key.
+     */
+    algorithm?: string;
+    /**
      * If true, the 'iat' (issued at) claim will be automatically added to the JWT payload during creation.
      */
     setIat?: boolean;

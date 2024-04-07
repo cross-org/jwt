@@ -108,13 +108,16 @@ The `JWTOptions` object can be used to provide flexibility when creating JWTs:
  * Options for customizing JWT creation and parsing behavior.
  */
 interface JWTOptions {
-    // If true, the 'iat' (issued at) claim will be automatically added to the JWT payload during creation.
+    // Algorithm to use.
+    // Algorithm for signing should be the same as key algorithm, used to enforce the use of a specific algorithm (can be useful for security reasons). (default: parsed from the supplied key)
+    algorithm?: string;
+    // If true, the 'iat' (issued at) claim will be automatically added to the JWT payload during creation. (default: true)
     setIat?: boolean;
     // If true, the 'exp' (expiration time) claim will be validated during creation and parsing.
     validateExp?: boolean;
     // If true, the 'nbf' (not before) claim will be validated during creation and parsing.
     validateNbf?: boolean;
-    //The number of seconds of leeway to allow for clock skew during expiration validation. (Default: 60)
+    //The number of seconds of leeway to allow for clock skew during expiration validation. (default: 60)
     clockSkewLeewaySeconds?: number;
     //Salt length for RSA-PSS sign and verify (default: 32).
     saltLength?: number;
@@ -151,7 +154,7 @@ const jwt = await signJWT({ hello: "world" }, secret);
 // Verifying and parsing the content of the JWT.
 const data = await validateJWT(jwt, secret);
 console.log(data);
-//Outputs: { hello: "world" }
+//Outputs: { hello: "world", iat: 1712516617 }
 ```
 
 Here is how you can use it with a RSA key pair.
@@ -166,16 +169,16 @@ const jwt = await signJWT({ userId: 123 }, privateKey);
 // Verifying and parsing the content of the JWT with the public key.
 const data = await validateJWT(jwt, publicKey);
 console.log(data);
-//Outputs: { userId: 123 }
+//Outputs: { userId: 123, iat: 1712516617 }
 ```
 
-Usage with custom options to enable writing the 'iat' (issued at) claim to the JWT payload during creation.
+Usage with custom options to disable writing the 'iat' (issued at) claim to the JWT payload during creation.
 
 ```javascript
 import { signJWT, validateJWT } from "@cross/jwt";
 
 const options = {
-    setIat: true,
+    setIat: false,
 };
 
 const secret = "mySuperSecretAtLeast32CharsLong!";
@@ -183,7 +186,7 @@ const jwt = await signJWT({ hello: "world" }, secret, options);
 
 const data = await validateJWT(jwt, secret);
 console.log(data);
-//Outputs: { hello: "world", iat: 1711977982}
+//Outputs: { hello: "world"}
 ```
 
 Full example with standard JWT claims. See [RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519#section-4.1)

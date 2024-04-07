@@ -1,6 +1,7 @@
 // mod.ts
 import { simpleMerge } from "@cross/deepmerge";
 import {
+    JWTAlgorithmMismatchError,
     JWTExpiredError,
     JWTFormatError,
     JWTNotYetValidError,
@@ -152,6 +153,7 @@ export async function generateKeyPair(
  * A set of default options.
  */
 const defaultOptions: JWTOptions = {
+    setIat: true,
     clockSkewLeewaySeconds: 60,
     validateExp: false,
     validateNbf: false,
@@ -196,8 +198,16 @@ export async function signJWT(
 
     key = (typeof key === "string") ? await generateKey(key) : key;
     const keyAlgorithm = detectAlgorithm(key);
-    if (!keyAlgorithm || !(keyAlgorithm in algorithmMapping)) {
-        throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm");
+    const algorithm = options?.algorithm || keyAlgorithm;
+
+    if (algorithm !== keyAlgorithm) {
+        throw new JWTAlgorithmMismatchError(
+            `Incompatible algorithm '${algorithm}' for key using '${keyAlgorithm}'. Provide a compatible key or omit the 'algorithm' option.`,
+        );
+    }
+
+    if (!algorithm || !(algorithm in algorithmMapping)) {
+        throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm.");
     }
 
     if (options?.setIat && !payload.iat) {
@@ -208,7 +218,7 @@ export async function signJWT(
         if (payload.exp) {
             const currentTimestamp = Math.floor(Date.now() / 1000);
             if (currentTimestamp >= payload.exp) {
-                throw new JWTValidationError("JWT 'exp' claim cannot be in the past");
+                throw new JWTValidationError("JWT 'exp' claim cannot be in the past.");
             }
         } else {
             throw new JWTRequiredClaimMissingError("exp");
@@ -219,14 +229,14 @@ export async function signJWT(
         if (payload.nbf) {
             const currentTimestamp = Math.floor(Date.now() / 1000);
             if (currentTimestamp > payload.nbf) {
-                throw new JWTValidationError("JWT 'nbf' claim cannot be in the past");
+                throw new JWTValidationError("JWT 'nbf' claim cannot be in the past.");
             }
         } else {
             throw new JWTRequiredClaimMissingError("nbf");
         }
     }
 
-    const header = { alg: key.algorithm.name, typ: "JWT" };
+    const header = { alg: algorithm, typ: "JWT" };
     const encodedHeader = encodeBase64Url(textEncode(JSON.stringify(header)));
     const encodedPayload = encodeBase64Url(textEncode(JSON.stringify(payload)));
 
@@ -290,7 +300,7 @@ export async function validateJWT(
     const keyAlgorithm = detectAlgorithm(key);
 
     if (!keyAlgorithm || !(keyAlgorithm in algorithmMapping)) {
-        throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm");
+        throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm.");
     }
 
     const unsignedData = `${jwtParts[0]}.${jwtParts[1]}`;
@@ -299,7 +309,7 @@ export async function validateJWT(
     const isValid = await verify(key, unsignedData, signature, options);
 
     if (!isValid) {
-        throw new JWTValidationError("JWT verification failed");
+        throw new JWTValidationError("JWT verification failed.");
     }
 
     const payload = JSON.parse(textDecode(decodeBase64Url(jwtParts[1])));

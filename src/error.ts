@@ -27,6 +27,19 @@ export class JWTUnsupportedAlgorithmError extends Error {
 }
 
 /**
+ * Represents an error caused by an missmatching algorithm in supplied algo and key algo.
+ */
+export class JWTAlgorithmMismatchError extends Error {
+    /**
+     * @param {string} message - A descriptive message about the issue.
+     */
+    constructor(message: string) {
+        super(message);
+        this.name = "JWTAlgorithmMismatchError";
+    }
+}
+
+/**
  * Represents a general error that occurred during JWT validation.
  */
 export class JWTValidationError extends Error {
