@@ -30,41 +30,21 @@ npx jsr add @cross/jwt
 
 ## API
 
+See [docs on jsr.io](https://jsr.io/@cross/jwt/doc) for details.
+
 **Helper Functions**
 
 - **`generateKey(keyStr: string, optionsOrAlgorithm?: SupportedGenerateKeyAlgorithms | Options): Promise<CryptoKey>`**
-  - Generates an HMAC key from a provided secret string.
-  - **`keyStr`**: The secret string to use as the key.
-  - **`options`**: Can be one of the following:
-    - **`SupportedGenerateKeyAlgorithms`** (string): "HS256", "HS384", or "HS512"
-    - OR
-    - **`GenerateKeyOptions`** (Object): See below
 
 - **`generateKeyPair(optionsOrAlgorithm?: KeyPairOptions): Promise<CryptoKeyPair>`**
-  - Generates an RSA key pair (public and private keys).
-  - **`options`**: Can be one of the following:
-    - **`SupportedGenerateKeyPairAlgorithms`** (string): For example "RS256" or "ES256" See supported algorithms below.
-      Defaults to "RS256".
-    - OR
-    - **`GenerateKeyPairOptions`** (Object): See below
+
+- **`exportKeyFiles(options: exportKeyFilesOptions): Promise<ExportedKeyFiles>`** (Experimental)
+
+**Sign and validate**
 
 - **`signJWT(payload: JWTPayload, key: CryptoKey | string, options?: Options): Promise<string>`**
-  - Creates a signed JWT.
-  - **`payload`**: The data to include in the JWT.
-  - **`key`**: Can be one of the following:
-    - HMAC key (`CryptoKey`)
-    - RSA public key (`CryptoKey`)
-    - String to generate an HMAC key
-  - **`options`** (optional): See `JWTOptions` below.
 
 - **`validateJWT(jwt: string, key: CryptoKey | string, options?: Options): Promise<JWTPayload>`**
-  - Verifies and parses a JWT.
-  - **`jwt`**: The encoded JWT string.
-  - **`key`**: Can be one of the following:
-    - HMAC key (`CryptoKey`)
-    - RSA public key (`CryptoKey`)
-    - String to generate an HMAC key
-  - **`options`:** (optional) See `JWTOptions` below.
 
 **GenerateKeyOptions Object**
 
@@ -96,6 +76,35 @@ interface GenerateKeyPairOptions {
     // The desired length of the RSA modulus in bits. Larger values offer greater
     // security, but impact performance. A common default is 2048.
     modulusLength?: number;
+}
+```
+
+The `exportKeyFilesOptions` object can be used to provide flexibility when exporting key pairs:
+
+```typescript
+/**
+ * Represents the options for the `exportKeyFiles` function.
+ */
+export interface exportKeyFilesOptions {
+    /**
+     * The private key to be exported.
+     */
+    privateKey: CryptoKey;
+
+    /**
+     * The file path where the PEM-formatted private key will be written. No file will be written if undefined.
+     */
+    privateFile?: string;
+
+    /**
+     * The public key to be exported.
+     */
+    publicKey: CryptoKey;
+
+    /**
+     * The file path where the PEM-formatted public key will be written. No file will be written if undefined.
+     */
+    publicFile?: string;
 }
 ```
 
@@ -139,6 +148,7 @@ interface JWTOptions {
 | PS256     | RSASSA-PSS using SHA-256 and MGF1 with SHA-256 |
 | PS384     | RSASSA-PSS using SHA-384 and MGF1 with SHA-384 |
 | PS512     | RSASSA-PSS using SHA-512 and MGF1 with SHA-512 |
+| none      | Unsecured JWT                                  |
 
 ## Usage
 
@@ -223,6 +233,15 @@ const jwt = await signJWT(data, key);
 const validatedData = await validateJWT(jwt, key);
 ```
 
+Using a unsecured JWT. Cases in which the JWT content is secured by a means other than a signature and/or encryption
+contained within the JWT.
+
+```javascript
+//Supply false or "none" instead of key for unsecured JWT.
+const jwt = await signJWT({ hello: "world" }, false);
+const data = await validateJWT(jwt, "none");
+```
+
 Generate a RSA key pair with custom Modulus length. (only key generation)
 
 ```javascript
@@ -236,6 +255,19 @@ Generate a HMAC key with short insecure secret, not recommended. (only key gener
 const keyOptions: GenerateKeyOptions = { algorithm: "HS512", allowInsecureKeyLengths: true };
 const insecureString = "shortString";
 const key = await generateKey(insecureString, keyOptions);
+```
+
+Export a key pair to local files. (Experimental, not fully implemented)
+
+```javascript
+const { privateKey, publicKey } = await generateKeyPair("RS512");
+const fileOptions = {
+    privateKey,
+    privateFile: "./keys/private_key.pem",
+    publicKey,
+    publicFile: "./keys/public_key.pem",
+};
+await exportKeyFiles(fileOptions);
 ```
 
 ## Issues

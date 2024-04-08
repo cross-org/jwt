@@ -3,6 +3,7 @@
  * Re-exports base64url encoding and decoding functions JSR standard library.
  */
 export { decodeBase64Url, encodeBase64Url } from "@std/encoding/base64url";
+export { encodeBase64 } from "@std/encoding/base64";
 
 /**
  * Encodes a string into a Uint8Array representation using the TextEncoder API.
