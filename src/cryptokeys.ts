@@ -1,4 +1,5 @@
-import { encodeBase64, textEncode } from "./encoding.ts";
+// cryptokeys.ts
+import { encodeBase64, textDecode, textEncode } from "./encoding.ts";
 import { JWTUnsupportedAlgorithmError, JWTValidationError } from "./error.ts";
 import { algorithmMapping } from "./options.ts";
 import { writeFile } from "@cross/fs/io";
@@ -21,87 +22,6 @@ export type SupportedGenerateKeyPairAlgorithms =
     | "PS384"
     | "PS512"
     | "none";
-
-/**
- * Represents the options for the `exportKeyFiles` function.
- */
-export interface exportKeyFilesOptions {
-    /**
-     * The private key to be exported.
-     */
-    privateKey: CryptoKey;
-
-    /**
-     * The file path where the PEM-formatted private key will be written. No file will be written if undefined.
-     */
-    privateFile?: string;
-
-    /**
-     * The public key to be exported.
-     */
-    publicKey: CryptoKey;
-
-    /**
-     * The file path where the PEM-formatted public key will be written. No file will be written if undefined.
-     */
-    publicFile?: string;
-}
-
-/**
- * Represents the return object from exporting a key pair.
- */
-interface ExportedKeyFiles {
-    /**
-     * The private key file content.
-     */
-    privateKey: string;
-
-    /**
-     * The public key file content.
-     */
-    publicKey: string;
-}
-
-/**
- * Exports a key pair to PEM-formatted files.
- *
- * @param {exportKeyFilesOptions} options - Options for the key export operation.
- * @returns {Promise<ExportedKeyFiles>} A promise that resolves when the files have been written.
- */
-export async function exportKeyFiles(options: exportKeyFilesOptions): Promise<ExportedKeyFiles> {
-    const { privateKey, publicKey, privateFile, publicFile } = options;
-
-    // todo: implement checks for privateKey, publicKey, privateFile, publicFile
-
-    const privateKeyExport = await window.crypto.subtle.exportKey("pkcs8", privateKey);
-    const publicKeyExport = await window.crypto.subtle.exportKey("spki", publicKey);
-
-    const privateKeyPem = formatAsPem("PRIVATE KEY", privateKeyExport);
-    const publicKeyPem = formatAsPem("PUBLIC KEY", publicKeyExport);
-
-    if (privateFile) {
-        await writeFile(privateFile, privateKeyPem);
-    }
-
-    if (publicFile) {
-        await writeFile(publicFile, publicKeyPem);
-    }
-
-    return { privateKey: privateKeyPem, publicKey: publicKeyPem };
-}
-
-/**
- * Formats a key as a PEM (Privacy Enhanced Mail) block.
- *
- * @param {string} header - The header type for the PEM block (e.g., "PUBLIC KEY", "RSA PRIVATE KEY").
- * @param {ArrayBuffer} keyData - An ArrayBuffer containing the binary key data.
- * @returns {string} The formatted PEM string.
- */
-function formatAsPem(header: string, keyData: ArrayBuffer) {
-    const base64Key = encodeBase64(keyData);
-    const lines = base64Key.match(/.{1,64}/g) || [];
-    return `-----BEGIN ${header}-----\n${lines.join("\n")}\n-----END ${header}-----`;
-}
 
 /**
  * Options for key generation
@@ -183,6 +103,12 @@ export interface GenerateKeyPairOptions {
      * but impact performance. A common default is 2048.
      */
     modulusLength?: number;
+
+    /**
+     * If true, allows generation of key pairs with modulus length shorter than recommended security guidelines.
+     * Use with caution, as shorter lengths are less secure.
+     */
+    allowInsecureModulusLengths?: boolean;
 }
 
 /**
@@ -196,11 +122,14 @@ export async function generateKeyPair(
     optionsOrAlgorithm: SupportedGenerateKeyPairAlgorithms | GenerateKeyPairOptions = "RS256",
 ): Promise<CryptoKeyPair> {
     let algorithm: SupportedGenerateKeyPairAlgorithms = "RS256";
-    let modulusLength: number = 2048;
+    const recommendedModulusLength: number = 2048;
+    let modulusLength: number = recommendedModulusLength;
+    let allowInsecureModulusLengths: boolean = false;
 
     if (typeof optionsOrAlgorithm === "object") {
         algorithm = optionsOrAlgorithm.algorithm || algorithm;
         modulusLength = optionsOrAlgorithm.modulusLength || modulusLength;
+        allowInsecureModulusLengths = optionsOrAlgorithm.allowInsecureModulusLengths || allowInsecureModulusLengths;
     } else {
         algorithm = optionsOrAlgorithm;
     }
@@ -213,6 +142,12 @@ export async function generateKeyPair(
     }
 
     if (algorithm.startsWith("RS") || algorithm.startsWith("PS")) {
+        if (!allowInsecureModulusLengths && modulusLength < recommendedModulusLength) {
+            throw new JWTValidationError(
+                `Modulus length should be at least ${recommendedModulusLength}.`,
+            );
+        }
+
         const algo = algorithmMapping[algorithm!] as RsaHashedKeyGenParams;
         algo.modulusLength = modulusLength;
         algo.publicExponent = new Uint8Array([0x01, 0x00, 0x01]);
@@ -231,4 +166,72 @@ export async function generateKeyPair(
     } else {
         throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm");
     }
+}
+
+/**
+ * Represents the options for the `exportKeyFiles` function.
+ */
+export interface ExportKeyFilesOptions {
+    /**
+     * The private key to be exported.
+     */
+    privateKey: CryptoKey;
+
+    /**
+     * The file path where the PEM-formatted private key will be written. No file will be written if undefined.
+     */
+    privateFile?: string;
+
+    /**
+     * The public key to be exported.
+     */
+    publicKey: CryptoKey;
+
+    /**
+     * The file path where the PEM-formatted public key will be written. No file will be written if undefined.
+     */
+    publicFile?: string;
+}
+
+/**
+ * Exports a key pair to PEM-formatted files.
+ *
+ * @param {ExportKeyFilesOptions} options - Options for the key export operation.
+ * @returns {Promise<ExportedKeyFiles>} A promise that resolves when the files have been written.
+ */
+export async function exportKeyFiles(
+    options: ExportKeyFilesOptions,
+): Promise<{ privateKey: string; publicKey: string }> {
+    const { privateKey, publicKey, privateFile, publicFile } = options;
+
+    // todo: implement checks for privateKey, publicKey, privateFile, publicFile
+
+    const privateKeyExport = await window.crypto.subtle.exportKey("pkcs8", privateKey);
+    const publicKeyExport = await window.crypto.subtle.exportKey("spki", publicKey);
+
+    const privateKeyPem = formatAsPem("PRIVATE KEY", privateKeyExport);
+    const publicKeyPem = formatAsPem("PUBLIC KEY", publicKeyExport);
+
+    if (privateFile) {
+        await writeFile(privateFile, privateKeyPem);
+    }
+
+    if (publicFile) {
+        await writeFile(publicFile, publicKeyPem);
+    }
+
+    return { privateKey: privateKeyPem, publicKey: publicKeyPem };
+}
+
+/**
+ * Formats a key as a PEM (Privacy Enhanced Mail) block.
+ *
+ * @param {string} header - The header type for the PEM block (e.g., "PUBLIC KEY", "RSA PRIVATE KEY").
+ * @param {ArrayBuffer} keyData - An ArrayBuffer containing the binary key data.
+ * @returns {string} The formatted PEM string.
+ */
+function formatAsPem(header: string, keyData: ArrayBuffer) {
+    const base64Key = encodeBase64(keyData);
+    const lines = base64Key.match(/.{1,64}/g) || [];
+    return `-----BEGIN ${header}-----\n${lines.join("\n")}\n-----END ${header}-----`;
 }

@@ -1,4 +1,4 @@
-// mod.ts
+// sign.ts
 import { simpleMerge } from "@cross/deepmerge";
 import {
     JWTAlgorithmMismatchError,
@@ -11,6 +11,7 @@ import { algorithmMapping, defaultOptions } from "./options.ts";
 import type { JWTOptions } from "./options.ts";
 import { encodeBase64Url, textEncode } from "./encoding.ts";
 import { generateKey } from "./cryptokeys.ts";
+import type { SupportedGenerateKeyAlgorithms } from "./cryptokeys.ts";
 
 import { signWithRSA } from "./sign-verify/rsa.ts";
 import { signWithHMAC } from "./sign-verify/hmac.ts";
@@ -67,12 +68,47 @@ export async function signJWT(
     options?: JWTOptions,
 ): Promise<string> {
     options = simpleMerge(defaultOptions, options);
+    const { algorithm, key: processedKey } = await processKey(key, options);
+
+    validateClaims(payload, options);
+
+    const header = { alg: algorithm, typ: "JWT" };
+    const encodedHeader = encodeBase64Url(textEncode(JSON.stringify(header)));
+    const encodedPayload = encodeBase64Url(textEncode(JSON.stringify(payload)));
+
+    const signature = algorithm === "none"
+        ? ""
+        : await sign(processedKey as CryptoKey, `${encodedHeader}.${encodedPayload}`, options);
+
+    return `${encodedHeader}.${encodedPayload}.${signature}`;
+}
+
+/**
+ * Processes the provided key and options, handling algorithm selection, key generation, and compatibility checks.
+ *
+ * @param {CryptoKey | string | false} key - The key (or a string to generate one), or 'false' for unsecured JWTs.
+ * @param {JWTOptions} [options] - Options for customizing JWT creation.
+ * @returns {Promise<{ algorithm: string, key: CryptoKey | false }>} A promise resolving to an object containing the final algorithm and the processed key (which could be 'false' for unsecured JWTs).
+ */
+async function processKey(
+    key: CryptoKey | string | false,
+    options?: JWTOptions,
+): Promise<{ algorithm: string; key: CryptoKey | false }> {
     let algorithm: string | null;
+
     if (key === false || (typeof key === "string" && key === "none")) {
+        key = false;
         options!.algorithm = "none";
         algorithm = "none";
+
+        return { algorithm, key };
     } else {
-        key = (typeof key === "string") ? await generateKey(key) : key;
+        if (typeof key === "string" && options?.algorithm) {
+            key = await generateKey(key, options?.algorithm as SupportedGenerateKeyAlgorithms);
+        } else if (typeof key === "string") {
+            key = await generateKey(key);
+        }
+
         const keyAlgorithm = detectAlgorithm(key);
         algorithm = options?.algorithm || keyAlgorithm;
 
@@ -85,7 +121,20 @@ export async function signJWT(
         if (!algorithm || !(algorithm in algorithmMapping)) {
             throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm.");
         }
+
+        return { algorithm, key };
     }
+}
+
+/**
+ * Validates the 'exp' and 'nbf' claims of a JWT payload (if validation is enabled in options).
+ *
+ * @param {JWTPayload} payload - The JWT payload to validate.
+ * @param {JWTOptions} [options] - Options for JWT creation.
+ * @throws {JWTValidationError} If the 'exp' or 'nbf' claim is invalid.
+ * @throws {JWTRequiredClaimMissingError} If a required claim ('exp' or 'nbf') is missing.
+ */
+function validateClaims(payload: JWTPayload, options?: JWTOptions): void {
     if (options?.setIat && !payload.iat) {
         payload.iat = Math.floor(Date.now() / 1000);
     }
@@ -111,16 +160,6 @@ export async function signJWT(
             throw new JWTRequiredClaimMissingError("nbf");
         }
     }
-
-    const header = { alg: algorithm, typ: "JWT" };
-    const encodedHeader = encodeBase64Url(textEncode(JSON.stringify(header)));
-    const encodedPayload = encodeBase64Url(textEncode(JSON.stringify(payload)));
-
-    const signature = algorithm === "none"
-        ? ""
-        : await sign(key as CryptoKey, `${encodedHeader}.${encodedPayload}`, options);
-
-    return `${encodedHeader}.${encodedPayload}.${signature}`;
 }
 
 /**

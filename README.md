@@ -32,19 +32,79 @@ npx jsr add @cross/jwt
 
 See [docs on jsr.io](https://jsr.io/@cross/jwt/doc) for details.
 
+**Sign and validate**
+
+- **`signJWT(payload: JWTPayload, key: CryptoKey | string | false, options?: JWTOptions): Promise<string>`**
+
+```javascript
+// Create and sign a JWT from a string directly, uses a HS256 key by default.
+const jwt = await signJWT({ hello: "world" }, "mySuperSecretAtLeast32CharsLong!");
+
+// Create and sign a JWT from a string directly, using a HS512 algorithm.
+const jwt = await signJWT({ hello: "world" }, "Secret my Super Secret at least 64 bytes long for HS512 algorithm!!!!", {
+    algorithm: "HS512",
+});
+
+// Create and sign a JWT from a CryptoKey (secret based or private key), and opting out of writing IAT claim when signing.
+// Using a cryptokey the library will parse algorithm from the supplied key
+const jwt = await signJWT({ hello: "world" }, cryptoKey, { setIat: false });
+
+// Create a JWT without signing it, essentially an unsecure JWT.
+const jwt = await signJWT({ hello: "world" }, false);
+```
+
+- **`validateJWT(jwt: string, key: CryptoKey | string | false, options?: JWTOptions): Promise<JWTPayload>`**
+
+```javascript
+// Validate and parse JWT with a string secret directly, uses a HS256 key by default.
+const data = await validateJWT(jwt, "mySuperSecretAtLeast32CharsLong!");
+
+// Validate and parse JWT with a string secret directly, uses a HS256 key by default.
+const data = await validateJWT(jwt, "Secret my Super Secret at least 64 bytes long for HS512 algorithm!!!!", {
+    algorithm: "HS512",
+});
+
+// Validate and parse JWT with a CryptoKey (secret based or public key).
+// Using a cryptokey the library will parse algorithm from the supplied key.
+const data = await validateJWT(jwt, cryptoKey);
+
+// Parsing a unsecure JWT
+const data = await validateJWT(jwt, false);
+```
+
 **Helper Functions**
 
 - **`generateKey(keyStr: string, optionsOrAlgorithm?: SupportedGenerateKeyAlgorithms | Options): Promise<CryptoKey>`**
 
+```javascript
+// Generates a HS256 key by default
+const key = await generateKey(stringSecret);
+
+// Generates a HS512 key
+const key = await generateKey(stringSecret, "HS512");
+
+// Generates a HS256 key by using options object (see GenerateKeyOptions)
+const key = await generateKey(stringSecret, { algorithm: "HS512" });
+```
+
 - **`generateKeyPair(optionsOrAlgorithm?: KeyPairOptions): Promise<CryptoKeyPair>`**
+
+```javascript
+// Generates a RS256 key pair by default.
+const { privateKey, publicKey } = await generateKeyPair();
+
+// Generates a HS512 key pair.
+const { privateKey, publicKey } = await generateKeyPair("RS512");
+
+// Generates a HS512 key pair by using options object (see GenerateKeyPairOptions).
+const key = await generateKeyPair({ algorithm: "HS512" });
+```
 
 - **`exportKeyFiles(options: exportKeyFilesOptions): Promise<ExportedKeyFiles>`** (Experimental)
 
-**Sign and validate**
-
-- **`signJWT(payload: JWTPayload, key: CryptoKey | string, options?: Options): Promise<string>`**
-
-- **`validateJWT(jwt: string, key: CryptoKey | string, options?: Options): Promise<JWTPayload>`**
+```javascript
+// Experimental, no examples.
+```
 
 **GenerateKeyOptions Object**
 
@@ -76,6 +136,9 @@ interface GenerateKeyPairOptions {
     // The desired length of the RSA modulus in bits. Larger values offer greater
     // security, but impact performance. A common default is 2048.
     modulusLength?: number;
+    // If true, allows generation of key pairs with modulus length shorter than recommended security guidelines.
+    // Use with caution, as shorter lengths are less secure.
+    allowInsecureModulusLengths?: boolean;
 }
 ```
 
