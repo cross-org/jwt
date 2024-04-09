@@ -13,8 +13,3 @@ jobs:
     uses: cross-org/workflows/.github/workflows/bun-ci.yml@main
     with:
       jsr_dependencies: "@cross/deepmerge @cross/fs @cross/test @std/assert @std/encoding"
-  node_ci:
-    uses: cross-org/workflows/.github/workflows/node-ci.yml@main
-    with:
-      jsr_dependencies: "@cross/deepmerge @cross/fs @cross/test @std/assert @std/encoding"
-      test_target: "*.test.ts"

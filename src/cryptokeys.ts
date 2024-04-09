@@ -1,5 +1,5 @@
 // cryptokeys.ts
-import { encodeBase64, textDecode, textEncode } from "./encoding.ts";
+import { encodeBase64, textEncode } from "./encoding.ts";
 import { JWTUnsupportedAlgorithmError, JWTValidationError } from "./error.ts";
 import { algorithmMapping } from "./options.ts";
 import { writeFile } from "@cross/fs/io";
