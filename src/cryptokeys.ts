@@ -205,6 +205,15 @@ function formatAsPem(header: string, keyData: ArrayBuffer) {
     return `-----BEGIN ${header}-----\n${lines.join("\n")}\n-----END ${header}-----`;
 }
 
+/**
+ * Imports a CryptoKey from a PEM-formatted string or file.
+ *
+ * @param {string} keyDataOrPath - The PEM-formatted key data or the path to a file containing the PEM data.
+ * @param {SupportedKeyPairAlgorithms} algorithm - The identifier of the key algorithm.
+ * @returns {Promise<CryptoKey>} A Promise resolving to the imported CryptoKey.
+ * @throws {JWTUnsupportedAlgorithmError} If the specified algorithm is not supported.
+ * @throws {JWTFormatError} If the provided keyDataOrPath is not in a valid PEM format.
+ */
 export async function importPEMKey(keyDataOrPath: string, algorithm: SupportedKeyPairAlgorithms): Promise<CryptoKey> {
     if (algorithm === "none" || !algorithmMapping[algorithm]) {
         throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm");
