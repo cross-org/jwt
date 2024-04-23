@@ -74,7 +74,7 @@ const data = await validateJWT(jwt, false);
 
 **Helper Functions**
 
-- **`generateKey(keyStr: string, optionsOrAlgorithm?: SupportedGenerateKeyAlgorithms | Options): Promise<CryptoKey>`**
+- **`generateKey(keyStr: string, optionsOrAlgorithm?: SupportedKeyAlgorithms | Options): Promise<CryptoKey>`**
 
 ```javascript
 // Generates a HS256 key by default
@@ -100,10 +100,20 @@ const { privateKey, publicKey } = await generateKeyPair("RS512");
 const key = await generateKeyPair({ algorithm: "HS512" });
 ```
 
-- **`exportKeyFiles(options: exportKeyFilesOptions): Promise<ExportedKeyFiles>`** (Experimental)
+- **`exportPEMKey(key: CryptoKey, filePath?: string): Promise<string>`** (Experimental)
+- **`importPEMKey(keyDataOrPath: string, algorithm: SupportedKeyPairAlgorithms): Promise<CryptoKey>`** (Experimental)
 
 ```javascript
-// Experimental, no examples.
+// Experimental.
+
+// Generate and export RS512 keys in PEM-format.
+const { privateKey, publicKey } = await generateKeyPair("RS512");
+await exportPEMKey(privateKey, "./private_key_RS512.pem");
+await exportPEMKey(publicKey, "./public_key_RS512.pem");
+
+// Import RS512 keys from PEM-format.
+const importedPrivateKey = await importPEMKey("./private_key_RS512.pem", "RS512");
+const importedPublicKey = await importPEMKey("./public_key_RS512.pem", "RS512");
 ```
 
 **GenerateKeyOptions Object**
@@ -116,7 +126,7 @@ The `GenerateKeyOptions` object can be used to provide flexibility when generati
  */
 interface GenerateKeyOptions {
     //The HMAC algorithm to use for key generation. Defaults to 'HS256'.
-    algorithm?: SupportedGenerateKeyAlgorithms;
+    algorithm?: SupportedKeyAlgorithms;
     // Use with caution, as shorter keys are less secure.
     allowInsecureKeyLengths?: boolean;
 }
@@ -132,42 +142,13 @@ The `GenerateKeyPairOptions` object can be used to provide flexibility when gene
  */
 interface GenerateKeyPairOptions {
     //The algorithm to use for key pair generation. Defaults to 'RS256'.
-    algorithm?: SupportedGenerateKeyPairAlgorithms;
+    algorithm?: SupportedKeyPairAlgorithms;
     // The desired length of the RSA modulus in bits. Larger values offer greater
     // security, but impact performance. A common default is 2048.
     modulusLength?: number;
     // If true, allows generation of key pairs with modulus length shorter than recommended security guidelines.
     // Use with caution, as shorter lengths are less secure.
     allowInsecureModulusLengths?: boolean;
-}
-```
-
-The `exportKeyFilesOptions` object can be used to provide flexibility when exporting key pairs:
-
-```typescript
-/**
- * Represents the options for the `exportKeyFiles` function.
- */
-export interface exportKeyFilesOptions {
-    /**
-     * The private key to be exported.
-     */
-    privateKey: CryptoKey;
-
-    /**
-     * The file path where the PEM-formatted private key will be written. No file will be written if undefined.
-     */
-    privateFile?: string;
-
-    /**
-     * The public key to be exported.
-     */
-    publicKey: CryptoKey;
-
-    /**
-     * The file path where the PEM-formatted public key will be written. No file will be written if undefined.
-     */
-    publicFile?: string;
 }
 ```
 
@@ -320,17 +301,17 @@ const insecureString = "shortString";
 const key = await generateKey(insecureString, keyOptions);
 ```
 
-Export a key pair to local files. (Experimental, not fully implemented)
+Export/import a key pair to and from local files. (Experimental)
 
 ```javascript
+// Generate and export RS512 keys in PEM-format.
 const { privateKey, publicKey } = await generateKeyPair("RS512");
-const fileOptions = {
-    privateKey,
-    privateFile: "./keys/private_key.pem",
-    publicKey,
-    publicFile: "./keys/public_key.pem",
-};
-await exportKeyFiles(fileOptions);
+await exportPEMKey(privateKey, "./private_key_RS512a.pem");
+await exportPEMKey(publicKey, "./public_key_RS512a.pem");
+
+// Import RS512 keys from PEM-format.
+const importedPrivateKey = await importPEMKey("./private_key_RS512.pem", "RS512");
+const importedPublicKey = await importPEMKey("./public_key_RS512.pem", "RS512");
 ```
 
 ## Issues

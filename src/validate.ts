@@ -14,7 +14,7 @@ import { algorithmMapping, defaultOptions } from "./options.ts";
 import type { JWTOptions } from "./options.ts";
 import { decodeBase64Url, textDecode } from "./encoding.ts";
 import { generateKey } from "./cryptokeys.ts";
-import type { SupportedGenerateKeyAlgorithms } from "./cryptokeys.ts";
+import type { SupportedKeyAlgorithms } from "./cryptokeys.ts";
 
 import { verifyWithRSA } from "./sign-verify/rsa.ts";
 import { verifyWithHMAC } from "./sign-verify/hmac.ts";
@@ -152,7 +152,7 @@ async function processKey(
         return { algorithm, key };
     } else {
         if (typeof key === "string" && options?.algorithm) {
-            key = await generateKey(key, options?.algorithm as SupportedGenerateKeyAlgorithms);
+            key = await generateKey(key, options?.algorithm as SupportedKeyAlgorithms);
         } else if (typeof key === "string") {
             key = await generateKey(key);
         }

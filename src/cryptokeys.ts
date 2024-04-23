@@ -1,18 +1,18 @@
 // cryptokeys.ts
-import { encodeBase64, textEncode } from "./encoding.ts";
-import { JWTUnsupportedAlgorithmError, JWTValidationError } from "./error.ts";
+import { decodeBase64, encodeBase64, textDecode, textEncode } from "./encoding.ts";
+import { JWTFormatError, JWTUnsupportedAlgorithmError, JWTValidationError } from "./error.ts";
 import { algorithmMapping } from "./options.ts";
-import { writeFile } from "@cross/fs/io";
+import { readFile, writeFile } from "@cross/fs/io";
 
 /**
  * Represents valid algorithm names for key generation using HMAC.
  */
-export type SupportedGenerateKeyAlgorithms = "HS256" | "HS384" | "HS512";
+export type SupportedKeyAlgorithms = "HS256" | "HS384" | "HS512";
 
 /**
  * Represents valid algorithm names for generating key pairs using RSA, ECDSA and RSA-PSS.
  */
-export type SupportedGenerateKeyPairAlgorithms =
+export type SupportedKeyPairAlgorithms =
     | "RS256"
     | "RS384"
     | "RS512"
@@ -30,7 +30,7 @@ export interface GenerateKeyOptions {
     /**
      * The HMAC algorithm to use for key generation. Defaults to 'HS256'.
      */
-    algorithm?: SupportedGenerateKeyAlgorithms;
+    algorithm?: SupportedKeyAlgorithms;
 
     /**
      * If true, allows generation of keys with lengths shorter than recommended security guidelines.
@@ -43,15 +43,15 @@ export interface GenerateKeyOptions {
  * Generates an HMAC key from a provided secret string.
  *
  * @param {string} keyStr - The secret string to use as the key.
- * @param {SupportedGenerateKeyAlgorithms | GenerateKeyOptions} optionsOrAlgorithm - The HMAC algorithm to use or GenerateKeyOptions object (default: "HS256").
+ * @param {SupportedKeyAlgorithms | GenerateKeyOptions} optionsOrAlgorithm - The HMAC algorithm to use or GenerateKeyOptions object (default: "HS256").
  * @returns {Promise<CryptoKey>} A promise resolving to the generated HMAC key.
  * @throws {JWTUnsupportedAlgorithmError} If the provided algorithm is not supported.
  */
 export async function generateKey(
     keyStr: string,
-    optionsOrAlgorithm: SupportedGenerateKeyAlgorithms | GenerateKeyOptions = "HS256",
+    optionsOrAlgorithm: SupportedKeyAlgorithms | GenerateKeyOptions = "HS256",
 ): Promise<CryptoKey> {
-    let algorithm: SupportedGenerateKeyAlgorithms = "HS256";
+    let algorithm: SupportedKeyAlgorithms = "HS256";
     let allowInsecureKeyLengths: boolean = false;
 
     if (typeof optionsOrAlgorithm === "object") {
@@ -71,7 +71,7 @@ export async function generateKey(
         HS256: 32,
         HS384: 48,
         HS512: 64,
-    }[algorithm as SupportedGenerateKeyAlgorithms];
+    }[algorithm as SupportedKeyAlgorithms];
 
     if (!allowInsecureKeyLengths && encodedKey.byteLength < minimumLength) {
         throw new JWTValidationError(
@@ -96,7 +96,7 @@ export interface GenerateKeyPairOptions {
     /**
      * The algorithm to use for key pair generation. Defaults to 'RS256'.
      */
-    algorithm?: SupportedGenerateKeyPairAlgorithms;
+    algorithm?: SupportedKeyPairAlgorithms;
 
     /**
      * The desired length of the RSA modulus in bits. Larger values offer greater security,
@@ -114,14 +114,14 @@ export interface GenerateKeyPairOptions {
 /**
  * Generates an RSA or ECDSA key pair (public and private key).
  *
- * @param {SupportedGenerateKeyPairAlgorithms | GenerateKeyPairOptions} optionsOrAlgorithm - The algorithm to use or GenerateKeyPairOptions object (default: "RS256").
+ * @param {SupportedKeyPairAlgorithms | GenerateKeyPairOptions} optionsOrAlgorithm - The algorithm to use or GenerateKeyPairOptions object (default: "RS256").
  * @returns {Promise<CryptoKeyPair>} A promise resolving to the generated key pair.
  * @throws {JWTUnsupportedAlgorithmError} If the provided algorithm is not supported.
  */
 export async function generateKeyPair(
-    optionsOrAlgorithm: SupportedGenerateKeyPairAlgorithms | GenerateKeyPairOptions = "RS256",
+    optionsOrAlgorithm: SupportedKeyPairAlgorithms | GenerateKeyPairOptions = "RS256",
 ): Promise<CryptoKeyPair> {
-    let algorithm: SupportedGenerateKeyPairAlgorithms = "RS256";
+    let algorithm: SupportedKeyPairAlgorithms = "RS256";
     const recommendedModulusLength: number = 2048;
     let modulusLength: number = recommendedModulusLength;
     let allowInsecureModulusLengths: boolean = false;
@@ -169,62 +169,31 @@ export async function generateKeyPair(
 }
 
 /**
- * Represents the options for the `exportKeyFiles` function.
- */
-export interface ExportKeyFilesOptions {
-    /**
-     * The private key to be exported.
-     */
-    privateKey: CryptoKey;
-
-    /**
-     * The file path where the PEM-formatted private key will be written. No file will be written if undefined.
-     */
-    privateFile?: string;
-
-    /**
-     * The public key to be exported.
-     */
-    publicKey: CryptoKey;
-
-    /**
-     * The file path where the PEM-formatted public key will be written. No file will be written if undefined.
-     */
-    publicFile?: string;
-}
-
-/**
- * Exports a key pair to PEM-formatted files.
+ * Exports a CryptoKey to PEM format and optionally writes it to a file.
  *
- * @param {ExportKeyFilesOptions} options - Options for the key export operation.
- * @returns {Promise<ExportedKeyFiles>} A promise that resolves when the files have been written.
+ * @param key - The CryptoKey to export.
+ * @param filePath - (Optional) Path to write the PEM-formatted key to.
+ * @returns {Promise<string>} A Promise resolving to the PEM-formatted key string.
  */
-export async function exportKeyFiles(
-    options: ExportKeyFilesOptions,
-): Promise<{ privateKey: string; publicKey: string }> {
-    const { privateKey, publicKey, privateFile, publicFile } = options;
+export async function exportPEMKey(key: CryptoKey, filePath?: string): Promise<string> {
+    const keyType = key.type;
 
-    // todo: implement checks for privateKey, publicKey, privateFile, publicFile
+    const exportedKey = await window.crypto.subtle.exportKey(
+        keyType === "private" ? "pkcs8" : "spki",
+        key,
+    );
 
-    const privateKeyExport = await window.crypto.subtle.exportKey("pkcs8", privateKey);
-    const publicKeyExport = await window.crypto.subtle.exportKey("spki", publicKey);
+    const pemKey = formatAsPem(keyType === "private" ? "PRIVATE KEY" : "PUBLIC KEY", exportedKey);
 
-    const privateKeyPem = formatAsPem("PRIVATE KEY", privateKeyExport);
-    const publicKeyPem = formatAsPem("PUBLIC KEY", publicKeyExport);
-
-    if (privateFile) {
-        await writeFile(privateFile, privateKeyPem);
+    if (filePath) {
+        await writeFile(filePath, pemKey);
     }
 
-    if (publicFile) {
-        await writeFile(publicFile, publicKeyPem);
-    }
-
-    return { privateKey: privateKeyPem, publicKey: publicKeyPem };
+    return pemKey;
 }
 
 /**
- * Formats a key as a PEM (Privacy Enhanced Mail) block.
+ * Formats a key as a PEM block.
  *
  * @param {string} header - The header type for the PEM block (e.g., "PUBLIC KEY", "RSA PRIVATE KEY").
  * @param {ArrayBuffer} keyData - An ArrayBuffer containing the binary key data.
@@ -234,4 +203,40 @@ function formatAsPem(header: string, keyData: ArrayBuffer) {
     const base64Key = encodeBase64(keyData);
     const lines = base64Key.match(/.{1,64}/g) || [];
     return `-----BEGIN ${header}-----\n${lines.join("\n")}\n-----END ${header}-----`;
+}
+
+export async function importPEMKey(keyDataOrPath: string, algorithm: SupportedKeyPairAlgorithms): Promise<CryptoKey> {
+    if (algorithm === "none" || !algorithmMapping[algorithm]) {
+        throw new JWTUnsupportedAlgorithmError("Unsupported key algorithm");
+    }
+
+    const algo = algorithmMapping[algorithm] as { name: string; hash?: string; namedCurve?: string };
+
+    let pemString: string;
+
+    if (keyDataOrPath.includes("-----BEGIN")) {
+        pemString = keyDataOrPath;
+    } else {
+        const fileBuffer = await readFile(keyDataOrPath);
+        pemString = textDecode(fileBuffer);
+    }
+
+    if (!pemString.includes("-----BEGIN")) {
+        throw new JWTFormatError("Wrong format. Not PEM?");
+    }
+
+    const keyType = pemString.includes("PRIVATE KEY") ? "private" : "public";
+
+    const pemHeader = `-----BEGIN ${keyType} KEY-----`;
+    const pemFooter = `-----END ${keyType} KEY-----`;
+    const pemContents = pemString.substring(pemHeader.length, pemString.length - pemFooter.length);
+    const binaryDer = decodeBase64(pemContents);
+
+    return await window.crypto.subtle.importKey(
+        keyType === "private" ? "pkcs8" : "spki",
+        binaryDer,
+        { ...algo },
+        false,
+        keyType === "private" ? ["sign"] : ["verify"],
+    );
 }
