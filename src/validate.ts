@@ -243,10 +243,10 @@ export async function verify(key: CryptoKey, data: string, signature: string, op
  * "unsafely" parse a JWT without cryptokey.
  *
  * @param {string} jwt - The encoded JWT string.
- * @returns {Promise<JWTPayload>} A promise resolving to the decoded JWT payload.
+ * @returns {JWTPayload} A promise resolving to the decoded JWT payload.
  * @throws {JWTParseError} If the jwt string is not parsable.
  */
-export function unsafeParseJWT(jwt: string): Promise<JWTPayload> {
+export function unsafeParseJWT(jwt: string): JWTPayload {
     try {
         const jwtParts = validateParts(jwt);
         const payload = JSON.parse(textDecode(decodeBase64Url(jwtParts[1])));
