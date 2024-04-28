@@ -240,7 +240,7 @@ export async function verify(key: CryptoKey, data: string, signature: string, op
 }
 
 /**
- * Validates and parses a JWT, verifying it with the given key.
+ * "unsafely" parse a JWT without cryptokey.
  *
  * @param {string} jwt - The encoded JWT string.
  * @returns {Promise<JWTPayload>} A promise resolving to the decoded JWT payload.
