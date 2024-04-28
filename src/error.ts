@@ -97,3 +97,16 @@ export class JWTRequiredOptionMissingError extends JWTFormatError {
         this.name = "JWTRequiredOptionMissingError";
     }
 }
+
+/**
+ * Represents a parsing error that occurred during JWT parsing.
+ */
+export class JWTParseError extends Error {
+    /**
+     * @param {string} message - A descriptive message about the parsing failure.
+     */
+    constructor(message: string) {
+        super(message);
+        this.name = "JWTParseError";
+    }
+}

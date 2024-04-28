@@ -1,6 +1,6 @@
 // mod.ts
 export { signJWT } from "./src/sign.ts";
-export { validateJWT } from "./src/validate.ts";
+export { unsafeParseJWT, validateJWT } from "./src/validate.ts";
 export { exportPEMKey, generateKey, generateKeyPair, importPEMKey } from "./src/cryptokeys.ts";
 export type {
     GenerateKeyOptions,

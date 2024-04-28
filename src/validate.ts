@@ -5,6 +5,7 @@ import {
     JWTExpiredError,
     JWTFormatError,
     JWTNotYetValidError,
+    JWTParseError,
     JWTRequiredClaimMissingError,
     JWTUnsupportedAlgorithmError,
     JWTValidationError,
@@ -235,5 +236,22 @@ export async function verify(key: CryptoKey, data: string, signature: string, op
             return await verifyWithRSAPSS(key, data, signature, options);
         default:
             throw new Error("Unsupported algorithm");
+    }
+}
+
+/**
+ * Validates and parses a JWT, verifying it with the given key.
+ *
+ * @param {string} jwt - The encoded JWT string.
+ * @returns {Promise<JWTPayload>} A promise resolving to the decoded JWT payload.
+ * @throws {JWTParseError} If the jwt string is not parsable.
+ */
+export function unsafeParseJWT(jwt: string): Promise<JWTPayload> {
+    try {
+        const jwtParts = validateParts(jwt);
+        const payload = JSON.parse(textDecode(decodeBase64Url(jwtParts[1])));
+        return payload;
+    } catch (error) {
+        throw new JWTParseError(error);
     }
 }

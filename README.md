@@ -72,6 +72,13 @@ const data = await validateJWT(jwt, cryptoKey);
 const data = await validateJWT(jwt, false);
 ```
 
+- **`unsafeParseJWT(jwt: string): Promise<JWTPayload>`**
+
+```javascript
+// "unsafely" parse a JWT without cryptokey, will return the payload.
+const unsafeData = unsafeParseJWT(jwt);
+```
+
 **Helper Functions**
 
 - **`generateKey(keyStr: string, optionsOrAlgorithm?: SupportedKeyAlgorithms | Options): Promise<CryptoKey>`**
