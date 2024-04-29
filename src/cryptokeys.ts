@@ -168,21 +168,44 @@ export async function generateKeyPair(
     }
 }
 
-// Options for PEM formatted file write.
+/**
+ * Options for PEM formatted file write.
+ */
 export interface ExportPEMKeyOptions {
-    // Optional path to write the PEM-formatted key to
+    /**
+     * Optional path to write the PEM-formatted key to
+     */
     filePath?: string;
-    // Optional for file write mode
+    /**
+     * Optional for file write mode
+     */
     mode?: number;
 }
 
-// Overload 1: Export without writing to a file
+/**
+ * Exports a CryptoKey to PEM format.
+ *
+ * @param key - The CryptoKey to export.
+ * @returns {Promise<string>} A Promise resolving to the PEM-formatted key string.
+ */
 export function exportPEMKey(key: CryptoKey): Promise<string>;
 
-// Overload 2: Export with a file path (default mode)
+/**
+ * Exports a CryptoKey to PEM format with file path.
+ *
+ * @param key - The CryptoKey to export.
+ * @param filePathOrOptions - Path to write the PEM-formatted key to.
+ * @returns {Promise<string>} A Promise resolving to the PEM-formatted key string.
+ */
 export function exportPEMKey(key: CryptoKey, filePath: string): Promise<string>;
 
-// Overload 3: Export with custom options
+/**
+ * Exports a CryptoKey to PEM format with options.
+ *
+ * @param key - The CryptoKey to export.
+ * @param filePathOrOptions - an ExportPEMKeyOptions object.
+ * @returns {Promise<string>} A Promise resolving to the PEM-formatted key string.
+ */
 export function exportPEMKey(key: CryptoKey, options: ExportPEMKeyOptions): Promise<string>;
 
 /**
