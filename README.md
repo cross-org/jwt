@@ -107,13 +107,13 @@ const { privateKey, publicKey } = await generateKeyPair("RS512");
 const key = await generateKeyPair({ algorithm: "HS512" });
 ```
 
-- **`exportPEMKey(key: CryptoKey, filePath?: string): Promise<string>`** (Experimental)
+- **`exportPEMKey(key: CryptoKey, filePathOrOptions?: string | ExportPEMKeyOptions): Promise<string>`** (Experimental)
 - **`importPEMKey(keyDataOrPath: string, algorithm: SupportedKeyPairAlgorithms): Promise<CryptoKey>`** (Experimental)
 
 ```javascript
 // Experimental.
 
-// Generate and export RS512 keys in PEM-format.
+// Generate and export RS512 keys in PEM-format. (filePath and write mode can be supplied as optional second parameter at export)
 const { privateKey, publicKey } = await generateKeyPair("RS512");
 await exportPEMKey(privateKey, "./private_key_RS512.pem");
 await exportPEMKey(publicKey, "./public_key_RS512.pem");

@@ -168,14 +168,41 @@ export async function generateKeyPair(
     }
 }
 
+// Options for PEM formatted file write.
+export interface ExportPEMKeyOptions {
+    // Optional path to write the PEM-formatted key to
+    filePath?: string;
+    // Optional for file write mode
+    mode?: number;
+}
+
+// Overload 1: Export without writing to a file
+export function exportPEMKey(key: CryptoKey): Promise<string>;
+
+// Overload 2: Export with a file path (default mode)
+export function exportPEMKey(key: CryptoKey, filePath: string): Promise<string>;
+
+// Overload 3: Export with custom options
+export function exportPEMKey(key: CryptoKey, options: ExportPEMKeyOptions): Promise<string>;
+
 /**
  * Exports a CryptoKey to PEM format and optionally writes it to a file.
  *
  * @param key - The CryptoKey to export.
- * @param filePath - (Optional) Path to write the PEM-formatted key to.
+ * @param filePathOrOptions - (Optional) Path to write the PEM-formatted key to, or an ExportPEMKeyOptions object.
  * @returns {Promise<string>} A Promise resolving to the PEM-formatted key string.
  */
-export async function exportPEMKey(key: CryptoKey, filePath?: string): Promise<string> {
+export async function exportPEMKey(key: CryptoKey, filePathOrOptions?: string | ExportPEMKeyOptions): Promise<string> {
+    let filePath: string | undefined;
+    let options: ExportPEMKeyOptions | undefined;
+
+    if (typeof filePathOrOptions === "string") {
+        filePath = filePathOrOptions;
+    } else {
+        options = filePathOrOptions;
+        filePath = options?.filePath;
+    }
+
     const keyType = key.type;
 
     const exportedKey = await window.crypto.subtle.exportKey(
@@ -186,7 +213,7 @@ export async function exportPEMKey(key: CryptoKey, filePath?: string): Promise<s
     const pemKey = formatAsPem(keyType === "private" ? "PRIVATE KEY" : "PUBLIC KEY", exportedKey);
 
     if (filePath) {
-        await writeFile(filePath, pemKey);
+        await writeFile(filePath, pemKey, { mode: options?.mode ?? 0o600 });
     }
 
     return pemKey;

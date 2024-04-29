@@ -3,6 +3,7 @@ export { signJWT } from "./src/sign.ts";
 export { unsafeParseJWT, validateJWT } from "./src/validate.ts";
 export { exportPEMKey, generateKey, generateKeyPair, importPEMKey } from "./src/cryptokeys.ts";
 export type {
+    ExportPEMKeyOptions,
     GenerateKeyOptions,
     GenerateKeyPairOptions,
     SupportedKeyAlgorithms,
