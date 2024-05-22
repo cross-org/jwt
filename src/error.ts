@@ -86,6 +86,19 @@ export class JWTRequiredClaimMissingError extends JWTValidationError {
 }
 
 /**
+ * Represents an error caused by a JWT claim is defined twice. For example expiresIn as option and exp as raw payload.
+ */
+export class JWTAmbiguousClaimError extends JWTValidationError {
+    /**
+     * @param {string} claimName - The name of the Ambiguous claim (e.g., 'exp', 'nbf').
+     */
+    constructor(claimName: string) {
+        super(`Ambiguous claim supplied: ${claimName}`);
+        this.name = "JWTAmbiguousClaimError";
+    }
+}
+
+/**
  * Represents an error caused by a JWTOption that is missing a required property
  */
 export class JWTRequiredOptionMissingError extends JWTFormatError {

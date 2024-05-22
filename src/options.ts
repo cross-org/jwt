@@ -29,6 +29,17 @@ export interface JWTOptions {
      * Salt length for RSA-PSS sign and verify (default: 32).
      */
     saltLength?: number;
+    /**
+     * A duration string (e.g., "1h", "30m") specifying the expiration time relative to the current time.
+     * Cannot be used if the `exp` claim is explicitly set in the payload.
+     */
+    expiresIn?: string;
+
+    /**
+     * A duration string (e.g., "5m") specifying the "not before" time relative to the current time.
+     * Cannot be used if the `nbf` claim is explicitly set in the payload.
+     */
+    notBefore?: string;
 }
 
 /**

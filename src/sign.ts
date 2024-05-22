@@ -4,6 +4,7 @@ import {
     JWTAlgorithmMismatchError,
     JWTRequiredClaimMissingError,
     JWTUnsupportedAlgorithmError,
+    JWTAmbiguousClaimError,
     JWTValidationError,
 } from "./error.ts";
 import { detectAlgorithm } from "./utils.ts";
@@ -19,6 +20,32 @@ import { signWithECDSA } from "./sign-verify/ecdsa.ts";
 import { signWithRSAPSS } from "./sign-verify/rsapss.ts";
 
 import type { JWTPayload } from "./standardclaims.ts";
+
+/**
+ * Parses a duration string like "1d", "2h", "30m", or "15s" and returns the equivalent time in seconds.
+ *
+ * @param {string} durationStr - The duration string to parse.
+ * @returns {number} The duration in seconds.
+ * @throws {Error} If the duration string is invalid.
+ */
+function parseDuration(durationStr: string): number {
+    const match = durationStr.match(/^(\d+)([dhms])$/);
+    if (!match) {
+        throw new Error(`Invalid duration format: ${durationStr}`);
+    }
+
+    const amount = parseInt(match[1], 10);
+    const unit = match[2];
+
+    switch (unit) {
+        case "d": return amount * 24 * 60 * 60;
+        case "h": return amount * 60 * 60;
+        case "m": return amount * 60;
+        case "s": return amount;
+    }
+    // This line should never be reached due to the regex and switch cases
+    throw new Error('Unexpected error in duration parsing');
+}
 
 /**
  * Creates a JWT with the given key and payload.
@@ -69,6 +96,24 @@ export async function signJWT(
 ): Promise<string> {
     options = simpleMerge(defaultOptions, options);
     const { algorithm, key: processedKey } = await processKey(key, options);
+
+    if (options?.expiresIn) {
+
+        if (options?.expiresIn && payload?.exp) {
+            throw new JWTAmbiguousClaimError("exp");
+        }
+
+        payload.exp = Math.floor(Date.now() / 1000) + parseDuration(options.expiresIn);
+    }
+
+    if (options?.notBefore) {
+
+        if (options?.notBefore && payload?.nbf) {
+            throw new JWTAmbiguousClaimError("nbf");
+        }
+
+        payload.nbf = Math.floor(Date.now() / 1000) + parseDuration(options.notBefore);
+    }
 
     validateClaims(payload, options);
 
