@@ -86,6 +86,7 @@ export async function signJWT(payload: JWTPayload, key: false, options?: JWTOpti
  * @param {JWTOptions} [options] - Options to customize JWT creation (optional).
  * @returns {Promise<string>} A promise resolving to the encoded JWT string.
  * @throws {JWTUnsupportedAlgorithmError} If the key algorithm is not supported.
+ * @throws {JWTAmbiguousClaimError} if user supplies both expiresIn/notBefore options and exp/nbf as raw claim in payload.
  * @throws {JWTValidationError} If validation is enabled and there are issues with the 'exp' or 'nbf' claims.
  * @throws {JWTRequiredClaimMissingError} If validation is enabled and the 'exp' or 'nbf' claims are missing.
  */
