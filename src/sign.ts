@@ -2,9 +2,9 @@
 import { simpleMerge } from "@cross/deepmerge";
 import {
     JWTAlgorithmMismatchError,
+    JWTAmbiguousClaimError,
     JWTRequiredClaimMissingError,
     JWTUnsupportedAlgorithmError,
-    JWTAmbiguousClaimError,
     JWTValidationError,
 } from "./error.ts";
 import { detectAlgorithm } from "./utils.ts";
@@ -38,13 +38,17 @@ function parseDuration(durationStr: string): number {
     const unit = match[2];
 
     switch (unit) {
-        case "d": return amount * 24 * 60 * 60;
-        case "h": return amount * 60 * 60;
-        case "m": return amount * 60;
-        case "s": return amount;
+        case "d":
+            return amount * 24 * 60 * 60;
+        case "h":
+            return amount * 60 * 60;
+        case "m":
+            return amount * 60;
+        case "s":
+            return amount;
     }
     // This line should never be reached due to the regex and switch cases
-    throw new Error('Unexpected error in duration parsing');
+    throw new Error("Unexpected error in duration parsing");
 }
 
 /**
@@ -99,7 +103,6 @@ export async function signJWT(
     const { algorithm, key: processedKey } = await processKey(key, options);
 
     if (options?.expiresIn) {
-
         if (options?.expiresIn && payload?.exp) {
             throw new JWTAmbiguousClaimError("exp");
         }
@@ -108,7 +111,6 @@ export async function signJWT(
     }
 
     if (options?.notBefore) {
-
         if (options?.notBefore && payload?.nbf) {
             throw new JWTAmbiguousClaimError("nbf");
         }

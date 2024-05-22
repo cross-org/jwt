@@ -1,7 +1,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { test } from "@cross/test";
 import { generateKey, generateKeyPair, signJWT, validateJWT } from "./mod.ts";
-import { JWTFormatError, JWTValidationError, JWTAmbiguousClaimError } from "./src/error.ts";
+import { JWTAmbiguousClaimError, JWTFormatError, JWTValidationError } from "./src/error.ts";
 import type { SupportedKeyAlgorithms, SupportedKeyPairAlgorithms } from "./src/cryptokeys.ts";
 
 test("signJWT() and validateJWT() with HMAC algorithms", async () => {
@@ -97,7 +97,7 @@ test("signJWT() throws JWTAmbiguousClaimError with 'expiresIn' and 'exp'", async
 
     await assertRejects(
         () => signJWT(payload, secret, { expiresIn: "1h" }), // Also using expiresIn
-        JWTAmbiguousClaimError
+        JWTAmbiguousClaimError,
     );
 });
 
@@ -107,13 +107,13 @@ test("signJWT() throws JWTAmbiguousClaimError with 'notBefore' and 'nbf'", async
 
     await assertRejects(
         () => signJWT(payload, secret, { notBefore: "5m" }), // Also using notBefore
-        JWTAmbiguousClaimError
+        JWTAmbiguousClaimError,
     );
 });
 
 test("signJWT() works with 'expiresIn' only", async () => {
     const secret = "mySuperSecretAtLeast32CharsLong!";
-    const payload = { foo: "bar" }; 
+    const payload = { foo: "bar" };
 
     const jwt = await signJWT(payload, secret, { expiresIn: "1h" });
     const decoded = await validateJWT(jwt, secret);
@@ -122,7 +122,7 @@ test("signJWT() works with 'expiresIn' only", async () => {
 
 test("signJWT() works with 'notBefore' only", async () => {
     const secret = "mySuperSecretAtLeast32CharsLong!";
-    const payload = { foo: "bar" }; 
+    const payload = { foo: "bar" };
 
     const jwt = await signJWT(payload, secret, { notBefore: "5m" });
     const decoded = await validateJWT(jwt, secret);
