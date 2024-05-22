@@ -1,7 +1,7 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { test } from "@cross/test";
 import { generateKey, generateKeyPair, signJWT, validateJWT } from "./mod.ts";
-import { JWTFormatError, JWTValidationError } from "./src/error.ts";
+import { JWTFormatError, JWTValidationError, JWTAmbiguousClaimError } from "./src/error.ts";
 import type { SupportedKeyAlgorithms, SupportedKeyPairAlgorithms } from "./src/cryptokeys.ts";
 
 test("signJWT() and validateJWT() with HMAC algorithms", async () => {
@@ -88,4 +88,43 @@ test("validateJWT() throws JWTValidationError on tampered payload ", async () =>
     const tamperedPayload = parts[1].slice(0, -2);
     jwtString = [parts[0], tamperedPayload, parts[2]].join(".");
     await assertRejects(() => validateJWT(jwtString, secret), JWTValidationError);
+});
+
+// Tests for JWTAmbiguousClaimError
+test("signJWT() throws JWTAmbiguousClaimError with 'expiresIn' and 'exp'", async () => {
+    const secret = "mySuperSecretAtLeast32CharsLong!";
+    const payload = { foo: "bar", exp: 1234567890 }; // Explicit exp
+
+    await assertRejects(
+        () => signJWT(payload, secret, { expiresIn: "1h" }), // Also using expiresIn
+        JWTAmbiguousClaimError
+    );
+});
+
+test("signJWT() throws JWTAmbiguousClaimError with 'notBefore' and 'nbf'", async () => {
+    const secret = "mySuperSecretAtLeast32CharsLong!";
+    const payload = { foo: "bar", nbf: 1234567890 }; // Explicit nbf
+
+    await assertRejects(
+        () => signJWT(payload, secret, { notBefore: "5m" }), // Also using notBefore
+        JWTAmbiguousClaimError
+    );
+});
+
+test("signJWT() works with 'expiresIn' only", async () => {
+    const secret = "mySuperSecretAtLeast32CharsLong!";
+    const payload = { foo: "bar" }; 
+
+    const jwt = await signJWT(payload, secret, { expiresIn: "1h" });
+    const decoded = await validateJWT(jwt, secret);
+    assertEquals(typeof decoded.exp, "number");
+});
+
+test("signJWT() works with 'notBefore' only", async () => {
+    const secret = "mySuperSecretAtLeast32CharsLong!";
+    const payload = { foo: "bar" }; 
+
+    const jwt = await signJWT(payload, secret, { notBefore: "5m" });
+    const decoded = await validateJWT(jwt, secret);
+    assertEquals(typeof decoded.nbf, "number");
 });
