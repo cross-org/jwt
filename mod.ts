@@ -1,6 +1,6 @@
 // mod.ts
 export { signJWT } from "./src/sign.ts";
-export { unsafeParseJWT, validateJWT } from "./src/validate.ts";
+export { unsafeParseJOSEHeader, unsafeParseJWT, validateJWT } from "./src/validate.ts";
 export { exportPEMKey, generateKey, generateKeyPair, importPEMKey } from "./src/cryptokeys.ts";
 export type {
     ExportPEMKeyOptions,
@@ -10,7 +10,7 @@ export type {
     SupportedKeyPairAlgorithms,
 } from "./src/cryptokeys.ts";
 export type { JWTOptions } from "./src/options.ts";
-export type { JWTPayload } from "./src/standardclaims.ts";
+export type { JOSEHeader, JWTPayload } from "./src/standardclaims.ts";
 
 //Aliases
 export { signJWT as createJWT } from "./src/sign.ts";

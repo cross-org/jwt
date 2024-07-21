@@ -1,3 +1,5 @@
+import type { JOSEHeader } from "./standardclaims.ts";
+
 /**
  * Options for customizing JWT creation and parsing behavior.
  */
@@ -40,6 +42,11 @@ export interface JWTOptions {
      * Cannot be used if the `nbf` claim is explicitly set in the payload.
      */
     notBefore?: string;
+
+    /**
+     * Additional claims to include as part of the JWT's JOSE header.
+     */
+    additionalHeaderClaims?: JOSEHeader;
 }
 
 /**
