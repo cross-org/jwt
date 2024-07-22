@@ -22,7 +22,7 @@ import { verifyWithHMAC } from "./sign-verify/hmac.ts";
 import { verifyWithECDSA } from "./sign-verify/ecdsa.ts";
 import { verifyWithRSAPSS } from "./sign-verify/rsapss.ts";
 
-import type { JWTPayload } from "./standardclaims.ts";
+import type { JOSEHeader, JWTPayload } from "./standardclaims.ts";
 
 /**
  * Validates and parses a JWT, verifies it with the given key, and returns the contained payload.
@@ -243,13 +243,30 @@ export async function verify(key: CryptoKey, data: string, signature: string, op
  * "unsafely" parse a JWT without cryptokey.
  *
  * @param {string} jwt - The encoded JWT string.
- * @returns {JWTPayload} A promise resolving to the decoded JWT payload.
+ * @returns {JWTPayload} The decoded JWT payload.
  * @throws {JWTParseError} If the jwt string is not parsable.
  */
 export function unsafeParseJWT(jwt: string): JWTPayload {
     try {
         const jwtParts = validateParts(jwt);
         const payload = JSON.parse(textDecode(decodeBase64Url(jwtParts[1])));
+        return payload;
+    } catch (error) {
+        throw new JWTParseError(error);
+    }
+}
+
+/**
+ * "unsafely" parse the JOSE header of a JWT without cryptokey.
+ *
+ * @param {string} jwt - The encoded JWT string.
+ * @returns {JOSEHeader} The decoded header portion of the JWT.
+ * @throws {JWTParseError} If the jwt string is not parsable.
+ */
+export function unsafeParseJOSEHeader(jwt: string): JOSEHeader {
+    try {
+        const jwtParts = validateParts(jwt);
+        const payload = JSON.parse(textDecode(decodeBase64Url(jwtParts[0])));
         return payload;
     } catch (error) {
         throw new JWTParseError(error);

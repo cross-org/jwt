@@ -19,7 +19,7 @@ import { signWithHMAC } from "./sign-verify/hmac.ts";
 import { signWithECDSA } from "./sign-verify/ecdsa.ts";
 import { signWithRSAPSS } from "./sign-verify/rsapss.ts";
 
-import type { JWTPayload } from "./standardclaims.ts";
+import type { JOSEHeader, JWTPayload } from "./standardclaims.ts";
 
 /**
  * Parses a duration string like "1d", "2h", "30m", or "15s" and returns the equivalent time in seconds.
@@ -120,7 +120,11 @@ export async function signJWT(
 
     validateClaims(payload, options);
 
-    const header = { alg: algorithm, typ: "JWT" };
+    const header: JOSEHeader = { alg: algorithm, typ: "JWT" };
+    if (options?.additionalHeaderClaims !== undefined) {
+        Object.assign(header, options.additionalHeaderClaims);
+    }
+
     const encodedHeader = encodeBase64Url(textEncode(JSON.stringify(header)));
     const encodedPayload = encodeBase64Url(textEncode(JSON.stringify(payload)));
 
