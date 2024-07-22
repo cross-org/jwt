@@ -30,6 +30,12 @@ export interface JOSEHeader {
      * (see RFC 7519 section 5.1, RFC 7515 section 4.1.9, RFC 7516 section 4.1.11)
      */
     typ?: string;
+
+    /**
+     * Allows for the inclusion of other header properties with string keys and values of any type.
+     */
+    // deno-lint-ignore no-explicit-any
+    [key: string]: any;
 }
 
 /**
