@@ -173,7 +173,7 @@ test("validateJWT() throws JWTValidationError on stripped token", async () => {
     // unsigned token as the real item.
     const jwtString = await signJWT(payload, false);
 
-    assertRejects(
+    await assertRejects(
         () => validateJWT(jwtString, keyPair.publicKey),
         JWTValidationError,
     );
