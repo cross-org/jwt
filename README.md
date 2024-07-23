@@ -79,6 +79,13 @@ const data = await validateJWT(jwt, false);
 const unsafeData = unsafeParseJWT(jwt);
 ```
 
+- **`unsafeParseJOSEHeader(jwt: string): JOSEHeader`**
+
+```javascript
+// "unsafely" parse the JOSE header of a JWT without cryptokey.
+const unsafeData = unsafeParseJOSEHeader(jwt);
+```
+
 **Helper Functions**
 
 - **`generateKey(keyStr: string, optionsOrAlgorithm?: SupportedKeyAlgorithms | Options): Promise<CryptoKey>`**
@@ -187,8 +194,20 @@ interface JWTOptions {
     //A duration string (e.g., "5m") specifying the "not before" time claim relative to the current time.
     //Cannot be used if the `nbf` claim is explicitly set in the payload.
     notBefore?: string;
+    // Additional claims to include as part of the JWT's JOSE header.
+    additionalHeaderClaims?: JOSEHeader;
 }
 ```
+
+**Working with JWT Headers**
+
+Some usage scenarios, such as interoperating with OIDC providers that set key identifier (`kid`) header claims in the
+JWTs they issue, require JWT header introspection. Similarly, it is sometimes necessary to create tokens with additional
+header claims or override existing claims (e.g., the `typ` claim).
+
+The `additionalHeaderClaims` property in the `JWTOptions` provide the means to set/override header claims in tokens
+created through `signJWT`. Conversely, the `unsafeParseJOSEHeader` function reads the header claims of a token without
+validating it.
 
 ## Supported algorithms
 

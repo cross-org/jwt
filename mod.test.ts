@@ -136,7 +136,7 @@ test("signJWT() supports additional header claims", async () => {
     const payload = { foo: "bar", baz: 42 };
     const jwtString = await signJWT(payload, privateKey, {
         algorithm: algorithm,
-        additionalHeaderClaims: { typ: "JOSE", kid: "abc123" },
+        additionalHeaderClaims: { typ: "JOSE", kid: "abc123", someOther: [1, 2, 3] },
     });
 
     const unsafeHeader = unsafeParseJOSEHeader(jwtString);
@@ -145,7 +145,7 @@ test("signJWT() supports additional header claims", async () => {
 
     assertEquals(unsafePayload, payload);
     assertEquals(decodedPayload, payload);
-    const expectedHeader: JOSEHeader = { alg: algorithm, typ: "JOSE", kid: "abc123" };
+    const expectedHeader: JOSEHeader = { alg: algorithm, typ: "JOSE", kid: "abc123", someOther: [1, 2, 3] };
     assertEquals(unsafeHeader, expectedHeader);
 });
 
@@ -173,7 +173,7 @@ test("validateJWT() throws JWTValidationError on stripped token", async () => {
     // unsigned token as the real item.
     const jwtString = await signJWT(payload, false);
 
-    assertRejects(
+    await assertRejects(
         () => validateJWT(jwtString, keyPair.publicKey),
         JWTValidationError,
     );
