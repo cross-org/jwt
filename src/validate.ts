@@ -252,7 +252,11 @@ export function unsafeParseJWT(jwt: string): JWTPayload {
         const payload = JSON.parse(textDecode(decodeBase64Url(jwtParts[1])));
         return payload;
     } catch (error) {
-        throw new JWTParseError(error);
+        if (error instanceof Error) {
+            throw new JWTParseError(error.message);
+        } else {
+            throw new JWTParseError("An unknown error occurred while parsing the JWT."); 
+        }
     }
 }
 
@@ -269,6 +273,10 @@ export function unsafeParseJOSEHeader(jwt: string): JOSEHeader {
         const payload = JSON.parse(textDecode(decodeBase64Url(jwtParts[0])));
         return payload;
     } catch (error) {
-        throw new JWTParseError(error);
+        if (error instanceof Error) {
+            throw new JWTParseError(error.message);
+        } else {
+            throw new JWTParseError("An unknown error occurred while parsing the JOSE header."); 
+        }
     }
 }
