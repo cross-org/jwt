@@ -1,15 +1,15 @@
-on: 
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
 
 jobs:
-  deno_ci:
-    uses: cross-org/workflows/.github/workflows/deno-ci.yml@main
-    with:
-      entrypoint: mod.ts
-  bun_ci:
-    uses: cross-org/workflows/.github/workflows/bun-ci.yml@main
-    with:
-      jsr_dependencies: "@cross/deepmerge @cross/fs @cross/test @std/assert @std/encoding"
+    deno_ci:
+        uses: cross-org/workflows/.github/workflows/deno-ci.yml@main
+        with:
+            entrypoint: mod.ts
+    bun_ci:
+        uses: cross-org/workflows/.github/workflows/bun-ci.yml@main
+        with:
+            jsr_dependencies: "@cross/deepmerge @cross/fs @cross/test @std/assert @std/encoding"

@@ -255,7 +255,7 @@ export function unsafeParseJWT(jwt: string): JWTPayload {
         if (error instanceof Error) {
             throw new JWTParseError(error.message);
         } else {
-            throw new JWTParseError("An unknown error occurred while parsing the JWT."); 
+            throw new JWTParseError("An unknown error occurred while parsing the JWT.");
         }
     }
 }
@@ -276,7 +276,7 @@ export function unsafeParseJOSEHeader(jwt: string): JOSEHeader {
         if (error instanceof Error) {
             throw new JWTParseError(error.message);
         } else {
-            throw new JWTParseError("An unknown error occurred while parsing the JOSE header."); 
+            throw new JWTParseError("An unknown error occurred while parsing the JOSE header.");
         }
     }
 }
