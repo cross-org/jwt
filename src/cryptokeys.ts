@@ -277,7 +277,7 @@ export async function importPEMKey(keyDataOrPath: string, algorithm: SupportedKe
         pemString = keyDataOrPath;
     } else {
         const fileBuffer = await readFile(keyDataOrPath);
-        pemString = textDecode(fileBuffer);
+        pemString = textDecode(new Uint8Array(fileBuffer));
     }
 
     if (!pemString.includes("-----BEGIN")) {
