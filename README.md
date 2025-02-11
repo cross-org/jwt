@@ -19,7 +19,7 @@ Part of the @cross suite - check out our growing collection of cross-runtime too
 
 ```bash
 # For Deno
-deno add @cross/jwt
+deno add jsr:@cross/jwt
 
 # For Bun
 bunx jsr add @cross/jwt
