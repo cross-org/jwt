@@ -14,7 +14,7 @@ export async function signWithRSA(privateKey: CryptoKey, data: string) {
             await crypto.subtle.sign(
                 { name: "RSASSA-PKCS1-v1_5" },
                 privateKey,
-                textEncode(data),
+                textEncode(data) as BufferSource,
             ),
         ),
     );
@@ -38,7 +38,7 @@ export async function verifyWithRSA(
         { name: "RSASSA-PKCS1-v1_5" },
         publicKey,
         decodeBase64Url(signature),
-        textEncode(data),
+        textEncode(data) as BufferSource,
     );
     return isValid;
 }

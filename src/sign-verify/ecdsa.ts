@@ -14,7 +14,7 @@ export async function signWithECDSA(key: CryptoKey, data: string) {
     const signature = await crypto.subtle.sign(
         { name: "ECDSA", hash: hash },
         key,
-        textEncode(data),
+        textEncode(data) as BufferSource,
     );
     return encodeBase64Url(new Uint8Array(signature));
 }
@@ -34,7 +34,7 @@ export async function verifyWithECDSA(key: CryptoKey, data: string, signature: s
         { name: "ECDSA", hash: hash },
         key,
         decodeBase64Url(signature),
-        textEncode(data),
+        textEncode(data) as BufferSource,
     );
     return isValid;
 }

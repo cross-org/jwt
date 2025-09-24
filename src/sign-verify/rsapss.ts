@@ -16,7 +16,7 @@ export async function signWithRSAPSS(key: CryptoKey, data: string, options?: JWT
     const signature = await crypto.subtle.sign(
         key.algorithm,
         key,
-        textEncode(data),
+        textEncode(data) as BufferSource,
     );
     return encodeBase64Url(new Uint8Array(signature));
 }
@@ -37,7 +37,7 @@ export async function verifyWithRSAPSS(key: CryptoKey, data: string, signature: 
         key.algorithm,
         key,
         decodeBase64Url(signature),
-        textEncode(data),
+        textEncode(data) as BufferSource,
     );
     return isValid;
 }

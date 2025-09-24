@@ -82,7 +82,7 @@ export async function generateKey(
     const algo = algorithmMapping[algorithm!] as HmacKeyGenParams;
     return await crypto.subtle.importKey(
         "raw",
-        encodedKey,
+        encodedKey as BufferSource,
         algo,
         false,
         ["sign", "verify"],

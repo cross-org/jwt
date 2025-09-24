@@ -14,7 +14,7 @@ export async function signWithHMAC(key: CryptoKey, data: string) {
             await crypto.subtle.sign(
                 { name: "HMAC" },
                 key,
-                textEncode(data),
+                textEncode(data) as BufferSource,
             ),
         ),
     );
@@ -38,7 +38,7 @@ export async function verifyWithHMAC(
         { name: "HMAC" },
         key,
         decodeBase64Url(signature),
-        textEncode(data),
+        textEncode(data) as BufferSource,
     );
     return isValid;
 }
