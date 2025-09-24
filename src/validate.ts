@@ -122,7 +122,7 @@ function validateParts(jwt: string): string[] {
                     break;
             }
         } catch (err) {
-            if (err instanceof TypeError) {
+            if (err instanceof TypeError || err instanceof RangeError) {
                 const partName = Object.keys(JWTParts)[i];
                 throw new JWTFormatError(`Invalid Base64URL encoding in JWT ${partName}`);
             } else {
