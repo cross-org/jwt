@@ -5,6 +5,13 @@ import type { JWTPayload } from "../types/claims.ts";
 import type { JWTOptions } from "../types/options.ts";
 import type { JWTError } from "../errors/index.ts";
 
+/**
+ * Safely signs a JWT payload and returns a Result type instead of throwing.
+ * @param payload - The JWT payload to sign.
+ * @param key - The signing key (CryptoKey, string, or false for unsecured).
+ * @param options - Optional JWT signing options.
+ * @returns A Result containing the signed JWT string or an error.
+ */
 export async function signJWTSafe(
     payload: JWTPayload,
     key: CryptoKey | string | false,

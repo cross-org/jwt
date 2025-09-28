@@ -5,7 +5,8 @@
  */
 export class JWTFormatError extends Error {
     /**
-     * @param {string} message - A descriptive message about the formatting issue.
+     * Creates a new JWTFormatError.
+     * @param message - A descriptive message about the formatting issue.
      */
     constructor(message: string) {
         super(message);
@@ -18,7 +19,8 @@ export class JWTFormatError extends Error {
  */
 export class JWTUnsupportedAlgorithmError extends Error {
     /**
-     * @param {string} message - A descriptive message about the issue.
+     * Creates a new JWTUnsupportedAlgorithmError.
+     * @param message - A descriptive message about the issue.
      */
     constructor(message: string) {
         super(message);
@@ -31,7 +33,8 @@ export class JWTUnsupportedAlgorithmError extends Error {
  */
 export class JWTAlgorithmMismatchError extends Error {
     /**
-     * @param {string} message - A descriptive message about the issue.
+     * Creates a new JWTAlgorithmMismatchError.
+     * @param message - A descriptive message about the issue.
      */
     constructor(message: string) {
         super(message);
@@ -44,7 +47,8 @@ export class JWTAlgorithmMismatchError extends Error {
  */
 export class JWTValidationError extends Error {
     /**
-     * @param {string} message - A descriptive message about the validation failure.
+     * Creates a new JWTValidationError.
+     * @param message - A descriptive message about the validation failure.
      */
     constructor(message: string) {
         super(message);
@@ -77,7 +81,8 @@ export class JWTNotYetValidError extends JWTValidationError {
  */
 export class JWTRequiredClaimMissingError extends JWTValidationError {
     /**
-     * @param {string} claimName - The name of the missing claim (e.g., 'exp', 'nbf').
+     * Creates a new JWTRequiredClaimMissingError.
+     * @param claimName - The name of the missing claim (e.g., 'exp', 'nbf').
      */
     constructor(claimName: string) {
         super(`Missing required claim: ${claimName}`);
@@ -90,7 +95,8 @@ export class JWTRequiredClaimMissingError extends JWTValidationError {
  */
 export class JWTAmbiguousClaimError extends JWTValidationError {
     /**
-     * @param {string} claimName - The name of the Ambiguous claim (e.g., 'exp', 'nbf').
+     * Creates a new JWTAmbiguousClaimError.
+     * @param claimName - The name of the Ambiguous claim (e.g., 'exp', 'nbf').
      */
     constructor(claimName: string) {
         super(`Ambiguous claim supplied: ${claimName}`);
@@ -103,7 +109,8 @@ export class JWTAmbiguousClaimError extends JWTValidationError {
  */
 export class JWTRequiredOptionMissingError extends JWTFormatError {
     /**
-     * @param {string} optionName - The name of the missing option.
+     * Creates a new JWTRequiredOptionMissingError.
+     * @param optionName - The name of the missing option.
      */
     constructor(optionName: string) {
         super(`Missing required option: ${optionName}`);
@@ -116,7 +123,8 @@ export class JWTRequiredOptionMissingError extends JWTFormatError {
  */
 export class JWTParseError extends Error {
     /**
-     * @param {string} message - A descriptive message about the parsing failure.
+     * Creates a new JWTParseError.
+     * @param message - A descriptive message about the parsing failure.
      */
     constructor(message: string) {
         super(message);

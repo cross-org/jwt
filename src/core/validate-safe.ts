@@ -5,6 +5,13 @@ import type { JOSEHeader, JWTPayload } from "../types/claims.ts";
 import type { JWTOptions } from "../types/options.ts";
 import type { JWTError } from "../errors/index.ts";
 
+/**
+ * Safely validates a JWT and returns a Result type instead of throwing.
+ * @param jwt - The JWT string to validate.
+ * @param key - The validation key (CryptoKey, string, or false for unsecured).
+ * @param options - Optional JWT validation options.
+ * @returns A Result containing the JWT payload or an error.
+ */
 export async function validateJWTSafe(
     jwt: string,
     key: CryptoKey | string | false,
@@ -25,6 +32,11 @@ export async function validateJWTSafe(
     }
 }
 
+/**
+ * Safely parses a JWT payload without validation and returns a Result type instead of throwing.
+ * @param jwt - The JWT string to parse.
+ * @returns A Result containing the JWT payload or an error.
+ */
 export function unsafeParseJWTSafe(jwt: string): Result<JWTPayload, JWTError> {
     try {
         const payload = unsafeParseJWT(jwt);
@@ -34,6 +46,11 @@ export function unsafeParseJWTSafe(jwt: string): Result<JWTPayload, JWTError> {
     }
 }
 
+/**
+ * Safely parses a JWT JOSE header without validation and returns a Result type instead of throwing.
+ * @param jwt - The JWT string to parse.
+ * @returns A Result containing the JOSE header or an error.
+ */
 export function unsafeParseJOSEHeaderSafe(jwt: string): Result<JOSEHeader, JWTError> {
     try {
         const header = unsafeParseJOSEHeader(jwt);

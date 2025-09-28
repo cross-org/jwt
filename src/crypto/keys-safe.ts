@@ -10,6 +10,12 @@ import type {
     SupportedKeyPairAlgorithms,
 } from "./keys.ts";
 
+/**
+ * Safely generates a cryptographic key and returns a Result type instead of throwing.
+ * @param keyStr - The key string to use for key generation.
+ * @param optionsOrAlgorithm - The algorithm or options for key generation.
+ * @returns A Result containing the generated CryptoKey or an error.
+ */
 export async function generateKeySafe(
     keyStr: string,
     optionsOrAlgorithm: SupportedKeyAlgorithms | GenerateKeyOptions = "HS256",
@@ -22,6 +28,11 @@ export async function generateKeySafe(
     }
 }
 
+/**
+ * Safely generates a cryptographic key pair and returns a Result type instead of throwing.
+ * @param optionsOrAlgorithm - The algorithm or options for key pair generation.
+ * @returns A Result containing the generated CryptoKeyPair or an error.
+ */
 export async function generateKeyPairSafe(
     optionsOrAlgorithm: SupportedKeyPairAlgorithms | GenerateKeyPairOptions = "RS256",
 ): Promise<Result<CryptoKeyPair, JWTError>> {
@@ -33,6 +44,12 @@ export async function generateKeyPairSafe(
     }
 }
 
+/**
+ * Safely exports a cryptographic key to PEM format and returns a Result type instead of throwing.
+ * @param key - The CryptoKey to export.
+ * @param filePathOrOptions - Optional file path or export options.
+ * @returns A Result containing the PEM string or an error.
+ */
 export async function exportPEMKeySafe(
     key: CryptoKey,
     filePathOrOptions?: string | ExportPEMKeyOptions,
@@ -49,6 +66,12 @@ export async function exportPEMKeySafe(
     }
 }
 
+/**
+ * Safely imports a cryptographic key from PEM format and returns a Result type instead of throwing.
+ * @param pem - The PEM string to import.
+ * @param algorithm - The algorithm for the key pair.
+ * @returns A Result containing the imported CryptoKey or an error.
+ */
 export async function importPEMKeySafe(
     pem: string,
     algorithm: SupportedKeyPairAlgorithms,

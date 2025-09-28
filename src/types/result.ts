@@ -10,9 +10,15 @@ export type Result<T, E = Error> = Ok<T> | Err<E>;
  * Represents a successful result containing a value.
  */
 export class Ok<T> {
+    /** Indicates this is a successful result. */
     readonly success = true as const;
+    /** Indicates this is not an error result. */
     readonly error = false as const;
 
+    /**
+     * Creates a new successful result containing the provided value.
+     * @param value - The successful value to wrap.
+     */
     constructor(public readonly value: T) {}
 
     /**
@@ -69,9 +75,15 @@ export class Ok<T> {
  * Represents an error result containing an error.
  */
 export class Err<E> {
+    /** Indicates this is not a successful result. */
     readonly success = false as const;
+    /** Indicates this is an error result. */
     readonly error = true as const;
 
+    /**
+     * Creates a new error result containing the provided error value.
+     * @param errorValue - The error value to wrap.
+     */
     constructor(public readonly errorValue: E) {}
 
     /**
