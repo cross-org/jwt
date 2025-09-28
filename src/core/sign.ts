@@ -6,20 +6,20 @@ import {
     JWTRequiredClaimMissingError,
     JWTUnsupportedAlgorithmError,
     JWTValidationError,
-} from "./error.ts";
-import { detectAlgorithm } from "./utils.ts";
-import { algorithmMapping, defaultOptions } from "./options.ts";
-import type { JWTOptions } from "./options.ts";
-import { encodeBase64Url, textEncode } from "./encoding.ts";
-import { generateKey } from "./cryptokeys.ts";
-import type { SupportedKeyAlgorithms } from "./cryptokeys.ts";
+} from "../errors/index.ts";
+import { detectAlgorithm } from "../utils/index.ts";
+import { algorithmMapping, defaultOptions } from "../types/options.ts";
+import type { JWTOptions } from "../types/options.ts";
+import { encodeBase64Url, textEncode } from "../utils/encoding.ts";
+import { generateKey } from "../crypto/keys.ts";
+import type { SupportedKeyAlgorithms } from "../crypto/keys.ts";
 
-import { signWithRSA } from "./sign-verify/rsa.ts";
-import { signWithHMAC } from "./sign-verify/hmac.ts";
-import { signWithECDSA } from "./sign-verify/ecdsa.ts";
-import { signWithRSAPSS } from "./sign-verify/rsapss.ts";
+import { signWithRSA } from "../crypto/sign-verify/rsa.ts";
+import { signWithHMAC } from "../crypto/sign-verify/hmac.ts";
+import { signWithECDSA } from "../crypto/sign-verify/ecdsa.ts";
+import { signWithRSAPSS } from "../crypto/sign-verify/rsapss.ts";
 
-import type { JOSEHeader, JWTPayload } from "./standardclaims.ts";
+import type { JOSEHeader, JWTPayload } from "../types/claims.ts";
 
 /**
  * Parses a duration string like "1d", "2h", "30m", or "15s" and returns the equivalent time in seconds.

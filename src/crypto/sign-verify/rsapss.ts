@@ -1,6 +1,6 @@
 //ecdsa.ts
-import { decodeBase64Url, encodeBase64Url, textEncode } from "../encoding.ts";
-import type { JWTOptions } from "../options.ts";
+import { decodeBase64Url, encodeBase64Url, textEncode } from "../../utils/encoding.ts";
+import type { JWTOptions } from "../../types/options.ts";
 
 /**
  * Signs data using the RSA-PSS algorithm with a specified key.

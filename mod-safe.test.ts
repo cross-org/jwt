@@ -17,7 +17,7 @@ import {
     unsafeParseJWTSafe as unsafeParseJWT,
     validateJWTSafe,
 } from "./mod.ts";
-import type { SupportedKeyAlgorithms, SupportedKeyPairAlgorithms } from "./src/cryptokeys.ts";
+import type { SupportedKeyAlgorithms, SupportedKeyPairAlgorithms } from "./src/crypto/keys.ts";
 
 // Test Result type functionality
 test("Result type - Ok", () => {

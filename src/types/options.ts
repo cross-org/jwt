@@ -1,4 +1,4 @@
-import type { JOSEHeader } from "./standardclaims.ts";
+import type { JOSEHeader } from "./claims.ts";
 
 /**
  * Options for customizing JWT creation and parsing behavior.

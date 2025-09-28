@@ -1,8 +1,8 @@
 import { assertEquals, assertRejects } from "@std/assert";
 import { test } from "@cross/test";
 import { generateKey, generateKeyPair, signJWT, unsafeParseJOSEHeader, unsafeParseJWT, validateJWT } from "./mod.ts";
-import { JWTAmbiguousClaimError, JWTFormatError, JWTValidationError } from "./src/error.ts";
-import type { SupportedKeyAlgorithms, SupportedKeyPairAlgorithms } from "./src/cryptokeys.ts";
+import { JWTAmbiguousClaimError, JWTFormatError, JWTValidationError } from "./src/errors/index.ts";
+import type { SupportedKeyAlgorithms, SupportedKeyPairAlgorithms } from "./src/crypto/keys.ts";
 import type { JOSEHeader } from "./mod.ts";
 
 test("signJWT() and validateJWT() with HMAC algorithms", async () => {

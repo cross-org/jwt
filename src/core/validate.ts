@@ -9,20 +9,20 @@ import {
     JWTRequiredClaimMissingError,
     JWTUnsupportedAlgorithmError,
     JWTValidationError,
-} from "./error.ts";
-import { detectAlgorithm } from "./utils.ts";
-import { algorithmMapping, defaultOptions } from "./options.ts";
-import type { JWTOptions } from "./options.ts";
-import { decodeBase64Url, textDecode } from "./encoding.ts";
-import { generateKey } from "./cryptokeys.ts";
-import type { SupportedKeyAlgorithms } from "./cryptokeys.ts";
+} from "../errors/index.ts";
+import { detectAlgorithm } from "../utils/index.ts";
+import { algorithmMapping, defaultOptions } from "../types/options.ts";
+import type { JWTOptions } from "../types/options.ts";
+import { decodeBase64Url, textDecode } from "../utils/encoding.ts";
+import { generateKey } from "../crypto/keys.ts";
+import type { SupportedKeyAlgorithms } from "../crypto/keys.ts";
 
-import { verifyWithRSA } from "./sign-verify/rsa.ts";
-import { verifyWithHMAC } from "./sign-verify/hmac.ts";
-import { verifyWithECDSA } from "./sign-verify/ecdsa.ts";
-import { verifyWithRSAPSS } from "./sign-verify/rsapss.ts";
+import { verifyWithRSA } from "../crypto/sign-verify/rsa.ts";
+import { verifyWithHMAC } from "../crypto/sign-verify/hmac.ts";
+import { verifyWithECDSA } from "../crypto/sign-verify/ecdsa.ts";
+import { verifyWithRSAPSS } from "../crypto/sign-verify/rsapss.ts";
 
-import type { JOSEHeader, JWTPayload } from "./standardclaims.ts";
+import type { JOSEHeader, JWTPayload } from "../types/claims.ts";
 
 /**
  * Validates and parses a JWT, verifies it with the given key, and returns the contained payload.

@@ -1,16 +1,16 @@
 // mod.ts
 
 // Main functions (throwing behavior by default)
-export { signJWT } from "./src/sign.ts";
-export { unsafeParseJOSEHeader, unsafeParseJWT, validateJWT } from "./src/validate.ts";
-export { exportPEMKey, generateKey, generateKeyPair, importPEMKey } from "./src/cryptokeys.ts";
+export { signJWT } from "./src/core/sign.ts";
+export { unsafeParseJOSEHeader, unsafeParseJWT, validateJWT } from "./src/core/validate.ts";
+export { exportPEMKey, generateKey, generateKeyPair, importPEMKey } from "./src/crypto/keys.ts";
 
 // Result type and utilities
-export type { Err, Ok, Result } from "./src/result.ts";
-export { err, ok, tryCatch, tryCatchSync } from "./src/result.ts";
+export type { Err, Ok, Result } from "./src/types/result.ts";
+export { err, ok, tryCatch, tryCatchSync } from "./src/types/result.ts";
 
 // Error types
-export type { JWTError } from "./src/error.ts";
+export type { JWTError } from "./src/errors/index.ts";
 export {
     JWTAlgorithmMismatchError,
     JWTAmbiguousClaimError,
@@ -22,7 +22,7 @@ export {
     JWTRequiredOptionMissingError,
     JWTUnsupportedAlgorithmError,
     JWTValidationError,
-} from "./src/error.ts";
+} from "./src/errors/index.ts";
 
 // Type exports
 export type {
@@ -31,15 +31,15 @@ export type {
     GenerateKeyPairOptions,
     SupportedKeyAlgorithms,
     SupportedKeyPairAlgorithms,
-} from "./src/cryptokeys.ts";
-export type { JWTOptions } from "./src/options.ts";
-export type { JOSEHeader, JWTPayload } from "./src/standardclaims.ts";
+} from "./src/crypto/keys.ts";
+export type { JWTOptions } from "./src/types/options.ts";
+export type { JOSEHeader, JWTPayload } from "./src/types/claims.ts";
 
 //Aliases
-export { signJWT as createJWT } from "./src/sign.ts";
-export { validateJWT as verifyJWT } from "./src/validate.ts";
+export { signJWT as createJWT } from "./src/core/sign.ts";
+export { validateJWT as verifyJWT } from "./src/core/validate.ts";
 
 // Safe error handling variants (always return Result types)
-export { signJWTSafe } from "./src/sign-safe.ts";
-export { unsafeParseJOSEHeaderSafe, unsafeParseJWTSafe, validateJWTSafe } from "./src/validate-safe.ts";
-export { exportPEMKeySafe, generateKeyPairSafe, generateKeySafe, importPEMKeySafe } from "./src/cryptokeys-safe.ts";
+export { signJWTSafe } from "./src/core/sign-safe.ts";
+export { unsafeParseJOSEHeaderSafe, unsafeParseJWTSafe, validateJWTSafe } from "./src/core/validate-safe.ts";
+export { exportPEMKeySafe, generateKeyPairSafe, generateKeySafe, importPEMKeySafe } from "./src/crypto/keys-safe.ts";

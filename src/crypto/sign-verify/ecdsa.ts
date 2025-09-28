@@ -1,5 +1,5 @@
 //ecdsa.ts
-import { decodeBase64Url, encodeBase64Url, textEncode } from "../encoding.ts";
+import { decodeBase64Url, encodeBase64Url, textEncode } from "../../utils/encoding.ts";
 
 /**
  * Signs data using the ECDSA algorithm with a specified key.

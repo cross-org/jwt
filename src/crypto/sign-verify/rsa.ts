@@ -1,5 +1,5 @@
 //rsa.ts
-import { decodeBase64Url, encodeBase64Url, textEncode } from "../encoding.ts";
+import { decodeBase64Url, encodeBase64Url, textEncode } from "../../utils/encoding.ts";
 
 /**
  * Signs data using an RSA private key (RSASSA-PKCS1-v1_5 algorithm).

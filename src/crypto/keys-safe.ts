@@ -1,14 +1,14 @@
 // cryptokeys-safe.ts
-import { exportPEMKey, generateKey, generateKeyPair, importPEMKey } from "./cryptokeys.ts";
-import { err, ok, type Result } from "./result.ts";
-import type { JWTError } from "./error.ts";
+import { exportPEMKey, generateKey, generateKeyPair, importPEMKey } from "./keys.ts";
+import { err, ok, type Result } from "../types/result.ts";
+import type { JWTError } from "../errors/index.ts";
 import type {
     ExportPEMKeyOptions,
     GenerateKeyOptions,
     GenerateKeyPairOptions,
     SupportedKeyAlgorithms,
     SupportedKeyPairAlgorithms,
-} from "./cryptokeys.ts";
+} from "./keys.ts";
 
 export async function generateKeySafe(
     keyStr: string,

@@ -1,9 +1,9 @@
 // validate-safe.ts
 import { unsafeParseJOSEHeader, unsafeParseJWT, validateJWT } from "./validate.ts";
-import { err, ok, type Result } from "./result.ts";
-import type { JOSEHeader, JWTPayload } from "./standardclaims.ts";
-import type { JWTOptions } from "./options.ts";
-import type { JWTError } from "./error.ts";
+import { err, ok, type Result } from "../types/result.ts";
+import type { JOSEHeader, JWTPayload } from "../types/claims.ts";
+import type { JWTOptions } from "../types/options.ts";
+import type { JWTError } from "../errors/index.ts";
 
 export async function validateJWTSafe(
     jwt: string,
