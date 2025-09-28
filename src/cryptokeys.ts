@@ -289,7 +289,8 @@ export async function importPEMKey(keyDataOrPath: string, algorithm: SupportedKe
     const pemHeader = `-----BEGIN ${keyType} KEY-----`;
     const pemFooter = `-----END ${keyType} KEY-----`;
     const pemContents = pemString.substring(pemHeader.length, pemString.length - pemFooter.length);
-    const binaryDer = decodeBase64(pemContents);
+    const cleanBase64 = pemContents.replace(/\s/g, "");
+    const binaryDer = decodeBase64(cleanBase64);
 
     return await crypto.subtle.importKey(
         keyType === "private" ? "pkcs8" : "spki",

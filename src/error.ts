@@ -123,3 +123,18 @@ export class JWTParseError extends Error {
         this.name = "JWTParseError";
     }
 }
+
+/**
+ * Union type of all possible JWT errors.
+ */
+export type JWTError =
+    | JWTFormatError
+    | JWTUnsupportedAlgorithmError
+    | JWTAlgorithmMismatchError
+    | JWTValidationError
+    | JWTExpiredError
+    | JWTNotYetValidError
+    | JWTRequiredClaimMissingError
+    | JWTAmbiguousClaimError
+    | JWTRequiredOptionMissingError
+    | JWTParseError;

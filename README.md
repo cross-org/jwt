@@ -14,6 +14,8 @@ Part of the @cross suite - check out our growing collection of cross-runtime too
 - **Cross-Platform:** Functions seamlessly across Deno, Bun, and Node.js environments.
 - **Intuitive API:** Provides simple-to-use functions for JWT creation, parsing, signing, and verification.
 - **Key Management:** Includes helpers for generating HMAC secret keys and RSA or ECDSA key pairs.
+- **Safe Error Handling:** Optional Result-based error handling with `*Safe` function variants for functional
+  programming patterns and type safety.
 
 ## Installation
 
@@ -31,6 +33,10 @@ npx jsr add @cross/jwt
 ## API
 
 See [docs on jsr.io](https://jsr.io/@cross/jwt/doc) for details.
+
+> **🔧 Safe Error Handling**: Use `*Safe` function variants (e.g., `signJWTSafe`, `validateJWTSafe`) to get
+> `Result<T, JWTError>` instead of throwing exceptions. Good for functional programming patterns and type inference. See
+> the Result<T, E>-section further down.
 
 **Sign and validate**
 
@@ -88,7 +94,7 @@ const unsafeData = unsafeParseJOSEHeader(jwt);
 
 **Helper Functions**
 
-- **`generateKey(keyStr: string, optionsOrAlgorithm?: SupportedKeyAlgorithms | Options): Promise<CryptoKey>`**
+- **`generateKey(keyStr: string, optionsOrAlgorithm?: SupportedKeyAlgorithms | GenerateKeyOptions): Promise<CryptoKey>`**
 
 ```javascript
 // Generates a HS256 key by default
@@ -101,17 +107,17 @@ const key = await generateKey(stringSecret, "HS512");
 const key = await generateKey(stringSecret, { algorithm: "HS512" });
 ```
 
-- **`generateKeyPair(optionsOrAlgorithm?: KeyPairOptions): Promise<CryptoKeyPair>`**
+- **`generateKeyPair(optionsOrAlgorithm?: SupportedKeyPairAlgorithms | GenerateKeyPairOptions): Promise<CryptoKeyPair>`**
 
 ```javascript
 // Generates a RS256 key pair by default.
 const { privateKey, publicKey } = await generateKeyPair();
 
-// Generates a HS512 key pair.
+// Generates a RS512 key pair.
 const { privateKey, publicKey } = await generateKeyPair("RS512");
 
-// Generates a HS512 key pair by using options object (see GenerateKeyPairOptions).
-const key = await generateKeyPair({ algorithm: "HS512" });
+// Generates a RS512 key pair by using options object (see GenerateKeyPairOptions).
+const key = await generateKeyPair({ algorithm: "RS512" });
 ```
 
 - **`exportPEMKey(key: CryptoKey, filePathOrOptions?: string | ExportPEMKeyOptions): Promise<string>`** (Experimental)
@@ -128,6 +134,46 @@ await exportPEMKey(publicKey, "./public_key_RS512.pem");
 // Import RS512 keys from PEM-format.
 const importedPrivateKey = await importPEMKey("./private_key_RS512.pem", "RS512");
 const importedPublicKey = await importPEMKey("./public_key_RS512.pem", "RS512");
+```
+
+**Safe Error Handling Functions**
+
+For functional programming patterns or similar use cases you can use the `*Safe` variants that return
+`Result<T, JWTError>` instead of throwing exceptions:
+
+- **`signJWTSafe(payload: JWTPayload, key: CryptoKey | string | false, options?: JWTOptions): Promise<Result<string, JWTError>>`**
+- **`validateJWTSafe(jwt: string, key: CryptoKey | string | false, options?: JWTOptions): Promise<Result<JWTPayload, JWTError>>`**
+- **`unsafeParseJWTSafe(jwt: string): Result<JWTPayload, JWTError>`**
+- **`unsafeParseJOSEHeaderSafe(jwt: string): Result<JOSEHeader, JWTError>`**
+- **`generateKeySafe(keyStr: string, optionsOrAlgorithm?: SupportedKeyAlgorithms | GenerateKeyOptions): Promise<Result<CryptoKey, JWTError>>`**
+- **`generateKeyPairSafe(optionsOrAlgorithm?: SupportedKeyPairAlgorithms | GenerateKeyPairOptions): Promise<Result<CryptoKeyPair, JWTError>>`**
+- **`exportPEMKeySafe(key: CryptoKey, filePathOrOptions?: string | ExportPEMKeyOptions): Promise<Result<string, JWTError>>`**
+- **`importPEMKeySafe(pem: string, algorithm: SupportedKeyPairAlgorithms): Promise<Result<CryptoKey, JWTError>>`**
+
+```javascript
+import { generateKeySafe, signJWTSafe, validateJWTSafe } from "@cross/jwt";
+
+// Using safe functions with Result types
+const keyResult = await generateKeySafe("mySecret", "HS256");
+if (keyResult.isOk()) {
+    const key = keyResult.value;
+
+    const signResult = await signJWTSafe({ hello: "world" }, key);
+    if (signResult.isOk()) {
+        const jwt = signResult.value;
+
+        const validateResult = await validateJWTSafe(jwt, key);
+        if (validateResult.isOk()) {
+            console.log("Payload:", validateResult.value);
+        } else {
+            console.error("Validation failed:", validateResult.errorValue.message);
+        }
+    } else {
+        console.error("Signing failed:", signResult.errorValue.message);
+    }
+} else {
+    console.error("Key generation failed:", keyResult.errorValue.message);
+}
 ```
 
 **GenerateKeyOptions Object**
@@ -208,6 +254,58 @@ header claims or override existing claims (e.g., the `typ` claim).
 The `additionalHeaderClaims` property in the `JWTOptions` provide the means to set/override header claims in tokens
 created through `signJWT`. Conversely, the `unsafeParseJOSEHeader` function reads the header claims of a token without
 validating it.
+
+## Result<T, E> Type
+
+The safe functions return a `Result<T, E>` type that represents either a success (`Ok<T>`) or failure (`Err<E>`). This
+enables functional error handling patterns without exceptions.
+
+### Basic Usage
+
+```javascript
+import { validateJWTSafe } from "@cross/jwt";
+
+const result = await validateJWTSafe(jwt, "secret");
+if (result.isOk()) {
+    console.log("Success:", result.value);
+} else {
+    console.error("Error:", result.errorValue);
+}
+```
+
+### Available Methods
+
+**Checking Status:**
+
+- `isOk()` - Returns `true` if the result contains a success value
+- `isErr()` - Returns `true` if the result contains an error value
+
+**Accessing Values:**
+
+- `value` - Get the success value (only safe when `isOk()` is true)
+- `errorValue` - Get the error value (only safe when `isErr()` is true)
+- `unwrapOr(defaultValue)` - Get the success value or return a fallback
+
+**Transforming Values:**
+
+- `map(fn)` - Transform success value, leave errors unchanged
+- `flatMap(fn)` - Chain Results (function returns another Result)
+
+## Examples
+
+See [`examples/basic-usage.ts`](./examples/basic-usage.ts) for comprehensive examples including:
+
+- Basic JWT usage with traditional throwing functions
+- Error handling with try/catch blocks
+- HMAC and RSA key usage
+- Unsafe parsing examples
+
+See [`examples/result-type-usage.ts`](./examples/result-type-usage.ts) for examples using the safe Result-based
+functions:
+
+- Functional error handling with Result types
+- Safe JWT operations without exceptions
+- Error handling patterns with `*Safe` function variants
 
 ## Supported algorithms
 
