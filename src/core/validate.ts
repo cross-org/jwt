@@ -95,7 +95,7 @@ export async function validateJWT(
     let payload: JWTPayload;
     try {
         payload = JSON.parse(textDecode(decodeBase64Url(jwtParts[1])));
-    } catch (error) {
+    } catch (_error) {
         throw new JWTParseError("Invalid JWT payload: malformed JSON");
     }
 
@@ -256,10 +256,7 @@ export function unsafeParseJWT(jwt: string): JWTPayload {
         const jwtParts = validateParts(jwt);
         const payload = JSON.parse(textDecode(decodeBase64Url(jwtParts[1])));
         return payload;
-    } catch (error) {
-        if (error instanceof JWTFormatError || error instanceof JWTParseError) {
-            throw error;
-        }
+    } catch (_error) {
         throw new JWTParseError("Invalid JWT format or malformed payload");
     }
 }
@@ -276,10 +273,7 @@ export function unsafeParseJOSEHeader(jwt: string): JOSEHeader {
         const jwtParts = validateParts(jwt);
         const payload = JSON.parse(textDecode(decodeBase64Url(jwtParts[0])));
         return payload;
-    } catch (error) {
-        if (error instanceof JWTFormatError || error instanceof JWTParseError) {
-            throw error;
-        }
+    } catch (_error) {
         throw new JWTParseError("Invalid JWT format or malformed header");
     }
 }
