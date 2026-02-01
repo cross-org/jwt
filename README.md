@@ -434,8 +434,8 @@ Export/import a key pair to and from local files.
 ```javascript
 // Generate and export RS512 keys in PEM-format.
 const { privateKey, publicKey } = await generateKeyPair("RS512");
-await exportPEMKey(privateKey, "./private_key_RS512a.pem");
-await exportPEMKey(publicKey, "./public_key_RS512a.pem");
+await exportPEMKey(privateKey, "./private_key_RS512.pem");
+await exportPEMKey(publicKey, "./public_key_RS512.pem");
 
 // Import RS512 keys from PEM-format.
 const importedPrivateKey = await importPEMKey("./private_key_RS512.pem", "RS512");
