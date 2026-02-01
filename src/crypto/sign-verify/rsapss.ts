@@ -12,9 +12,12 @@ import type { JWTOptions } from "../../types/options.ts";
  * @returns {Promise<string>} A promise resolving to the base64url-encoded RSA-PSS signature.
  */
 export async function signWithRSAPSS(key: CryptoKey, data: string, options?: JWTOptions) {
-    (key.algorithm as RsaPssParams).saltLength = options?.saltLength || 32;
+    const algorithm = {
+        name: key.algorithm.name,
+        saltLength: options?.saltLength || 32,
+    };
     const signature = await crypto.subtle.sign(
-        key.algorithm,
+        algorithm,
         key,
         textEncode(data) as BufferSource,
     );
@@ -32,9 +35,12 @@ export async function signWithRSAPSS(key: CryptoKey, data: string, options?: JWT
  * @returns {Promise<boolean>} A promise resolving to `true` if the signature is valid, `false` otherwise.
  */
 export async function verifyWithRSAPSS(key: CryptoKey, data: string, signature: string, options?: JWTOptions) {
-    (key.algorithm as RsaPssParams).saltLength = options?.saltLength || 32;
+    const algorithm = {
+        name: key.algorithm.name,
+        saltLength: options?.saltLength || 32,
+    };
     const isValid = await crypto.subtle.verify(
-        key.algorithm,
+        algorithm,
         key,
         decodeBase64Url(signature),
         textEncode(data) as BufferSource,
