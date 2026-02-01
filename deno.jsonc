@@ -4,7 +4,8 @@
     "exports": "./mod.ts",
 
     "tasks": {
-        "publish-dry": "deno publish --dry-run"
+        "check": "deno fmt --check && deno lint && deno check mod.ts && deno task check-deps",
+        "check-deps": "deno run -rA jsr:@check/deps"
     },
     "fmt": {
         "lineWidth": 120,
@@ -13,7 +14,7 @@
     "imports": {
         "@cross/deepmerge": "jsr:@cross/deepmerge@^1.0.0",
         "@cross/fs": "jsr:@cross/fs@^0.1.11",
-        "@cross/test": "jsr:@cross/test@^0.0.10",
+        "@cross/test": "jsr:@cross/test@^0.0.14",
         "@std/assert": "jsr:@std/assert@^1.0.11",
         "@std/encoding": "jsr:@std/encoding@^1.0.7"
     }
