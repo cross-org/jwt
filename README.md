@@ -120,12 +120,10 @@ const { privateKey, publicKey } = await generateKeyPair("RS512");
 const key = await generateKeyPair({ algorithm: "RS512" });
 ```
 
-- **`exportPEMKey(key: CryptoKey, filePathOrOptions?: string | ExportPEMKeyOptions): Promise<string>`** (Experimental)
-- **`importPEMKey(keyDataOrPath: string, algorithm: SupportedKeyPairAlgorithms): Promise<CryptoKey>`** (Experimental)
+- **`exportPEMKey(key: CryptoKey, filePathOrOptions?: string | ExportPEMKeyOptions): Promise<string>`**
+- **`importPEMKey(keyDataOrPath: string, algorithm: SupportedKeyPairAlgorithms): Promise<CryptoKey>`**
 
 ```javascript
-// Experimental.
-
 // Generate and export RS512 keys in PEM-format. (filePath and write mode can be supplied as optional second parameter at export)
 const { privateKey, publicKey } = await generateKeyPair("RS512");
 await exportPEMKey(privateKey, "./private_key_RS512.pem");
@@ -431,13 +429,13 @@ const insecureString = "shortString";
 const key = await generateKey(insecureString, keyOptions);
 ```
 
-Export/import a key pair to and from local files. (Experimental)
+Export/import a key pair to and from local files.
 
 ```javascript
 // Generate and export RS512 keys in PEM-format.
 const { privateKey, publicKey } = await generateKeyPair("RS512");
-await exportPEMKey(privateKey, "./private_key_RS512a.pem");
-await exportPEMKey(publicKey, "./public_key_RS512a.pem");
+await exportPEMKey(privateKey, "./private_key_RS512.pem");
+await exportPEMKey(publicKey, "./public_key_RS512.pem");
 
 // Import RS512 keys from PEM-format.
 const importedPrivateKey = await importPEMKey("./private_key_RS512.pem", "RS512");
